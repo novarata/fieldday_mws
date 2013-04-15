@@ -6,11 +6,13 @@ Gem::Specification.new do |s|
   s.authors     = ['A. Edward Wible']
   s.email       = ["aewible@gmail.com"]
 
-  s.files = Dir["{lib}/**/*"] + ["README.md"]  
+  s.files = Dir["lib/**/*"] + ["README.md"]
   s.test_files = Dir["spec/**/*"]
   s.require_paths = ["lib"]
-  
+
   s.add_dependency "sinatra"
+  s.add_dependency "sinatra-activerecord"
+  s.add_dependency "pg"
   s.add_dependency "puma"
   s.add_dependency "haml"
 end
