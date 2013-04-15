@@ -1,7 +1,7 @@
 # encoding: UTF-8
 
 require 'rspec'
-#require 'rack/test'
+require 'rack/test'
 #require 'sinatra/base'
 
 
@@ -14,9 +14,12 @@ SimpleCov.start #do
 
 ENV['RACK_ENV'] ||= 'test'
 #ENV["EXPECT_WITH"] ||= "racktest"
-Spec_dir = File.expand_path( File.dirname __FILE__ )
-Dir[ File.join( Spec_dir, "/support/**/*.rb")].each { |f| require f }
+#Spec_dir = File.expand_path( File.dirname __FILE__ )
+#Dir[ File.join( Spec_dir, "/support/**/*.rb")].each { |f| require f }
 
-RSpec.configure do |config|
-  config.treat_symbols_as_metadata_keys_with_true_values = true  
+#RSpec.configure do |config|
+#  config.treat_symbols_as_metadata_keys_with_true_values = true  
+#end
+RSpec.configure do |conf|
+  conf.include Rack::Test::Methods
 end
