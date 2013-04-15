@@ -13,6 +13,7 @@ Gem::Specification.new do |s|
   s.add_dependency "sinatra"
   s.add_dependency "sinatra-activerecord"
   s.add_dependency "pg"
+  s.add_dependency "oj"
   s.add_dependency "puma"
   s.add_dependency "haml"
   s.add_dependency "sidekiq"

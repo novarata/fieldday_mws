@@ -12,4 +12,5 @@ group :test do
   gem 'rack-test'
   gem 'simplecov'
   gem 'fakeredis', :require => "fakeredis/rspec"
+  gem "database_cleaner"
 end

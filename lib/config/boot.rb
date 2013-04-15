@@ -6,7 +6,8 @@ Bundler.require(:default, ENV["RACK_ENV"].to_sym)
 
 Dir["./lib/**/*.rb"].each { |f| require f }
 
-db = URI.parse(ENV['DATABASE_URL'] || 'postgres://localhost/fieldday_dev')
+local_db_name = ENV["RACK_ENV"]=='test' ? 'fieldday_test' : 'fieldday_dev'
+db = URI.parse(ENV['DATABASE_URL'] || "postgres://localhost/#{local_db_name}")
 
 ActiveRecord::Base.establish_connection(
   :adapter  => db.scheme == 'postgres' ? 'postgresql' : db.scheme,

@@ -14,4 +14,10 @@ class FielddayMws < Sinatra::Base
     haml :index, :format => :html5
   end
 
+  post '/v1/order_requests' do
+    request = ApiRequest.create!(:request_type => ApiRequest::LIST_ORDERS_MWS, :store_id => params[:store_id])
+    FetchOrdersWorker.perform_async(request.id, params[:store_id], params[:time_from], params[:time_to])
+    { :api_request_id=>request.id }
+  end
+
 end
