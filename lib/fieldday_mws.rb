@@ -3,6 +3,8 @@ require 'haml'
 
 class FielddayMws < Sinatra::Base
 
+  configure { set :server, :puma }
+  
   get '/' do
     @client_ip = request.ip
     haml :index, :format => :html5
