@@ -1,2 +1,2 @@
-require './lib/fieldday_mws'
+require './lib/config/boot.rb'
 run FielddayMws
