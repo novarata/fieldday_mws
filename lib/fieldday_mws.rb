@@ -1,11 +1,10 @@
 require 'sinatra/base'
 require 'haml'
-require "sinatra/activerecord"
+require 'active_record'
 require 'sidekiq'
 require 'redis'
 
 class FielddayMws < Sinatra::Base
-  register Sinatra::ActiveRecordExtension
   configure { set :server, :puma }
   
   get '/' do
@@ -15,9 +14,14 @@ class FielddayMws < Sinatra::Base
   end
 
   post '/v1/order_requests' do
-    request = ApiRequest.create!(:request_type => ApiRequest::LIST_ORDERS_MWS, :store_id => params[:store_id])
-    FetchOrdersWorker.perform_async(request.id, params[:store_id], params[:time_from], params[:time_to])
-    { :api_request_id=>request.id }
+    p = params[:order_request]
+    if p[:store_id] && p[:time_from] && p[:time_to]
+      request = ApiRequest.create!(:request_type => ApiRequest::LIST_ORDERS_MWS, :store_id => p[:store_id])
+      FetchOrdersWorker.perform_async(request.id, p[:store_id], p[:time_from], p[:time_to])
+      return { :api_request_id=>request.id }
+    else
+      return 500
+    end
   end
 
 end

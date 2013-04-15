@@ -12,6 +12,7 @@ describe "FielddayMws" do
 
   describe "GET '/'" do
     it "should be successful" do
+      Store.create(:name=>'Blah')
       get '/'
       last_response.should be_ok
     end
@@ -19,15 +20,12 @@ describe "FielddayMws" do
   
   describe "POST '/v1/order_requests" do
     it "should get name" do
-      json = { :format => 'json', :order_request => { :name => "Jonathan" } }
+      s = Store.create(:name=>'Blah')
+      json = { :format => 'json', :order_request => { :store_id => s.id, :time_from=>Time.now-1.week, :time_to=>Time.now } }
       post '/v1/order_requests', json
       last_response.should be_ok
-      puts last_response.body
     end
     
   end
-  
-  
-  
-  
+
 end

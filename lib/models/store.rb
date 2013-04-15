@@ -27,13 +27,12 @@ class Store < ActiveRecord::Base
   end
 
   # get orders from Amazon storefront between two times
-  def fetch_mws_orders(time_from, time_to)
-    request = ::ApiRequest.create!(:request_type => ApiRequest::LIST_ORDERS_MWS, :store_id => self.id)
-    request.store = self # connect this instance in memory for the open connection TODO is this still necessary?
-
+  def fetch_mws_orders(request_id, time_from, time_to)
+    request = ApiRequest.find(request_id)
+    self.init_store_connection
     if time_to.nil?
       response = self.mws_connection.get_orders_list(
-        :last_updated_after => time_from.iso8601,
+        :last_updated_after => DateTime.parse(time_from).iso8601,
         :results_per_page => self.order_results_per_page,
         :fulfillment_channel => FULFILLMENT_CHANNELS,
         :order_status => FULFILLMENT_STATUSES,
@@ -41,8 +40,8 @@ class Store < ActiveRecord::Base
       )
     else
       response = self.mws_connection.get_orders_list(
-        :last_updated_after => time_from.iso8601,
-        :last_updated_before => time_to.iso8601,
+        :last_updated_after => DateTime.parse(time_from).iso8601,
+        :last_updated_before => DateTime.parse(time_to).iso8601,
         :results_per_page => self.order_results_per_page,
         :fulfillment_channel => FULFILLMENT_CHANNELS,
         :order_status => FULFILLMENT_STATUSES,

@@ -16,3 +16,4 @@ latest.dump
 config/open_exchange_rates.yml
 config/redistogo.yml
 dump.rdb
+Gemfile.lock
