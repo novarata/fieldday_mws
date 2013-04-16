@@ -1,4 +1,8 @@
 # encoding: UTF-8
+require 'simplecov'
+SimpleCov.start do
+  add_group "Models", "./lib/models"
+end
 
 require 'rspec'
 require 'rack/test'
@@ -8,9 +12,7 @@ require_relative '../lib/config/boot.rb'
 
 require 'sidekiq/testing/inline' # do not delay sidekiq jobs
 
-# code coverage
-require 'simplecov'
-SimpleCov.start
+Dir["./spec/support/**/*.rb"].each {|f| require f}
 
 RSpec.configure do |config|
   config.include Rack::Test::Methods
