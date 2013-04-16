@@ -17,13 +17,15 @@ class Store < ActiveRecord::Base
       "marketplace_id"=>self.mws_marketplace_id )    
   end
 
+=begin
   # Try again to fetch the order items for orders that are missing items
-  #def reprocess_orders_missing_items
-  #  self.init_store_connection
-  #  orders_array = get_orders_missing_items
-  #  sleep_time = ::ApiRequest.get_sleep_time_per_order(orders_array.count)
-  #  orders_array.each_with_index { |o,i| ProcessOrderWorker.perform_in((sleep_time*i).seconds, o.id) }
-  #end
+  def reprocess_orders_missing_items
+    self.init_store_connection
+    orders_array = get_orders_missing_items
+    sleep_time = ::ApiRequest.get_sleep_time_per_order(orders_array.count)
+    orders_array.each_with_index { |o,i| ProcessOrderWorker.perform_in((sleep_time*i).seconds, o.id) }
+  end
+=end
 
   # get orders from Amazon storefront between two times
   def fetch_mws_orders(request_id, time_from, time_to)

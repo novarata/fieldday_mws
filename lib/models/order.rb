@@ -1,3 +1,5 @@
+require 'rest_client'
+
 class Order < ActiveRecord::Base
   MAX_ORDER_ITEM_PAGES = 20
   MAX_FAILURE_COUNT = 1
@@ -13,6 +15,10 @@ class Order < ActiveRecord::Base
   belongs_to :store
   has_many :order_items, :dependent => :destroy
   
+  
+  def post_order
+    RestClient.post 'http://localhost:3000/orders', :order => { :foreign_order_id => 'asdlfkjasdf' }
+  end
   
   # Process XML order into ActiveRecord, and process items on order
   def process_order(mws_connection)

@@ -20,4 +20,8 @@ describe Order do
     s.mws_connection.should be_a Amazon::MWS::Base
   end
 
+  it "should post and order to localhost" do
+    RestClient.post '/orders', :order => { :foreign_order_id => 'asdlfkjasdf' }
+  end
+
 end
