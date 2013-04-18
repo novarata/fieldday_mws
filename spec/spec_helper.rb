@@ -1,11 +1,14 @@
 # encoding: UTF-8
 require 'simplecov'
 SimpleCov.start do
+  add_filter "/spec/"
+  add_filter "/config/"
   add_group "Models", "./lib/models"
 end
 
 require 'rspec'
 require 'rack/test'
+require 'webmock/rspec'
 
 ENV['RACK_ENV'] = 'test'
 require_relative '../lib/config/boot.rb'
@@ -23,6 +26,8 @@ RSpec.configure do |config|
 
   config.before(:each) do
     DatabaseCleaner.start
+    FielddayMws.create_order_url = 'http://localhost:3000/orders'
+    FielddayMws.create_order_item_url = 'http://localhost:3000/order_items'
   end
 
   config.after(:each) do

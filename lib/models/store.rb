@@ -14,7 +14,8 @@ class Store < ActiveRecord::Base
       "access_key"=>self.mws_access_key,
       "secret_access_key"=>self.mws_secret_access_key,
       "merchant_id"=>self.mws_merchant_id,
-      "marketplace_id"=>self.mws_marketplace_id )    
+      "marketplace_id"=>self.mws_marketplace_id )
+    return self.mws_connection
   end
 
 =begin
@@ -27,32 +28,14 @@ class Store < ActiveRecord::Base
   end
 =end
 
+  #def fetch_items(order_id, amazon_order_id)
+  #  ApiRequest.fetch_items(self.id, order_id, amazon_order_id)
+  #end
+
   # get orders from Amazon storefront between two times
-  def fetch_mws_orders(request_id, time_from, time_to)
-    request = ApiRequest.find(request_id)
-    self.init_store_connection
-    time_from = time_from.is_a?(String) ? DateTime.parse(time_from) : time_from
-    if time_to.nil?
-      response = self.mws_connection.get_orders_list(
-        :last_updated_after => time_from.iso8601,
-        :results_per_page => self.order_results_per_page,
-        :fulfillment_channel => FULFILLMENT_CHANNELS,
-        :order_status => FULFILLMENT_STATUSES,
-        :marketplace_id => [self.mws_marketplace_id]     #TODO this handles a single marketplace only
-      )
-    else
-      time_to = time_to.is_a?(String) ? DateTime.parse(time_to) : time_to
-      response = self.mws_connection.get_orders_list(
-        :last_updated_after => time_from.iso8601,
-        :last_updated_before => time_to.iso8601,
-        :results_per_page => self.order_results_per_page,
-        :fulfillment_channel => FULFILLMENT_CHANNELS,
-        :order_status => FULFILLMENT_STATUSES,
-        :marketplace_id => [self.mws_marketplace_id]     #TODO this handles a single marketplace only
-      )
-    end
-    return request.process_orders(self.mws_connection, response)
-  end
+  #def fetch_orders(time_from, time_to)
+  #  ApiRequest.fetch_orders(self.id, time_from, time_to)
+  #end
 
 =begin
   def sync_listings_mws

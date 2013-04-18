@@ -1,15 +1,12 @@
 require 'spec_helper'
+include MwsHelpers
 
 describe Store do
 
-  it "fetch recent orders" do
-    @s = stub_mws_response
-    r = ApiRequest.create!(:request_type => ApiRequest::LIST_ORDERS_MWS, :store_id => @s.id)
-    expect{
-      expect{ 
-        @s.fetch_mws_orders(r.id, Time.now - 1.week, Time.now)
-      }.to change(OrderItem, :count).by(2)
-    }.to change(Order, :count).by(2)
+  it "store should have an mws_connection" do
+    s = stub_mws_store
+    s.init_store_connection
+    s.mws_connection.should be_a Amazon::MWS::Base
   end
-
+    
 end

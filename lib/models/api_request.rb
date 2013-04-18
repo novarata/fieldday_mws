@@ -1,16 +1,19 @@
 class ApiRequest < ActiveRecord::Base
 
-  LIST_ORDERS_MWS = "ListOrders"
-  LIST_ORDER_ITEMS_MWS = "ListOrderItems"
+  LIST_ORDERS = "ListOrders"
+  LIST_ORDERS_NEXT = "ListOrdersNext"
+  LIST_ORDER_ITEMS = "ListOrderItems"
+  LIST_ORDER_ITEMS_NEXT = "ListOrderItemsNext"
   
-  LIST_ORDER_ITEMS_REQUEST_QUOTA = 15.0
-  LIST_ORDER_ITEMS_RESTORE_RATE = 6.0
-  MAX_FAILURE_COUNT = 2
-  ORDER_FAIL_WAIT = 60
+  #LIST_ORDER_ITEMS_REQUEST_QUOTA = 15.0
+  #LIST_ORDER_ITEMS_RESTORE_RATE = 6.0
+  #MAX_FAILURE_COUNT = 2
+  #ORDER_FAIL_WAIT = 60
   FULLY_COMPLETED = 'fully_completed'
   STATUS_DONE = '_DONE_'
+  COMPLETE_STATUS = 'Complete'
   ASIN_ISSUE_MESSAGE_CODE = '8541'
-
+  
   FEED_POLL_WAIT = 3.minutes
   FEED_INCOMPLETE_WAIT = 1.minute
 
@@ -20,131 +23,120 @@ class ApiRequest < ActiveRecord::Base
   belongs_to :store
   belongs_to :parent_request, :class_name => "ApiRequest", :foreign_key => "api_request_id"
 
-  #has_many :orders, -> { order 'orders.purchase_date DESC' }, through: :api_responses
-  #has_many :order_items, through: :api_responses
-  #has_many :sub_requests, class_name:"ApiRequest", dependent: :destroy
-  #has_many :api_responses, dependent: :destroy
+  has_many :child_requests, :class_name => "ApiRequest", :foreign_key => "api_request_id"
+  has_many :api_responses
+
+  attr_accessor :mws_connection
 
   delegate :store_type, to: :store  
-  
-  # return a value between 0 and 6 for the number of seconds to delay between OrderItem requests to Amazon
-  def self.get_sleep_time_per_order(order_count)
-    return ((([order_count - LIST_ORDER_ITEMS_REQUEST_QUOTA, 0.0].max) / order_count)*LIST_ORDER_ITEMS_RESTORE_RATE).ceil if (order_count.is_a?(Numeric) && order_count>0)
-    return 0
-  end      
-  
+    
+  def init_mws_connection
+    return unless self.mws_connection.nil?
+    self.store.init_store_connection
+    self.mws_connection = self.store.mws_connection
+  end
+    
+  def self.fetch_orders(store_id, time_from, time_to)
+    ApiRequest.create!(request_type:LIST_ORDERS, store_id:store_id).fetch_orders(time_from, time_to)
+  end
+    
+  def self.fetch_items(store_id, order_id, amazon_order_id, parent_request_id)
+    ApiRequest.create!(request_type:LIST_ORDER_ITEMS, store_id:store_id, api_request_id:parent_request_id).fetch_items(order_id, amazon_order_id)
+  end
+    
   # accepts a working MWS connection and a ListOrdersResponse, and fully processes these orders
   # calls the Amazon MWS API
-  def process_orders(mws_connection, response)
-    #puts "  PROCESS_ORDERS: response type #{response.class.to_s}, request type #{self.request_type}"
-    next_token = process_response(mws_connection, response,0,0)
-    return next_token if next_token.is_a?(Numeric)
+  def fetch_orders(time_from, time_to=nil)
+    raise AmazonError unless time_from.present?
+    self.init_mws_connection
+    s = self.store
 
-    page_num = 1
-    failure_count = 0
-    while next_token.is_a?(String) && page_num<self.store.max_order_pages do
-      #puts "  PROCESS_ORDERS: back, next_token present, getting orders list by next token"
-      response = mws_connection.get_orders_list_by_next_token(:next_token => next_token)
-      #puts "  PROCESS_ORDERS: got orders by next token, going to process_response"
-      n = process_response(mws_connection,response,page_num,ORDER_FAIL_WAIT)
-      if n.is_a?(Numeric)
-        failure_count += 1
-        if failure_count >= MAX_FAILURE_COUNT
-          return n
-        end
-      else
-        page_num += 1
-        next_token = n
-      end
+    time_from = time_from.is_a?(String) ? DateTime.parse(time_from) : time_from    
+    args = {  last_updated_after:   time_from.iso8601,
+              results_per_page:     s.order_results_per_page,
+              fulfillment_channel:  Store::FULFILLMENT_CHANNELS,
+              order_status:         Store::FULFILLMENT_STATUSES,
+              marketplace_id:       [s.mws_marketplace_id]     #TODO this handles a single marketplace only
+            }
+    if time_to.present?
+      time_to = time_to.is_a?(String) ? DateTime.parse(time_to) : time_to
+      args.merge!({ last_updated_before: time_to.iso8601 })
     end
-    return true
-    #puts "  PROCESS_ORDERS: finishing"
+
+    mws_response = self.mws_connection.list_orders(*args)
+    self.fetch_orders_next_page(self.process_orders_page(mws_response))
   end
 
-  # accepts a working MWS connection and the XML model of the response, and incorporates this information into the database
-  # calls process_order or process_order_item in turn, which call the Amazon MWS API
-  def process_response(mws_connection,response_xml,page_num,sleep_if_error)
+  def fetch_orders_next_page(next_token)
+    return true if next_token.nil?
+    request = ApiRequest.create!(request_type:LIST_ORDERS_NEXT, store_id:self.store_id, api_request_id:self.id)
+    self.init_mws_connection
+    mws_response = self.mws_connection.list_orders_by_next_token(next_token: next_token)
+    self.fetch_orders_next_page(request.process_orders_page(mws_response))
+  end
 
-    #puts "PROCESS_RESPONSE: request_type is #{self.request_type}"
-    # Update the request_id in our request parent object if not set already
-    self.update_attributes!(:foreign_request_id=>response_xml.request_id) if self.foreign_request_id.nil?
+  def create_api_response(mws_response, extra_attrs={})
+    self.update_attributes!(foreign_request_id: mws_response.request_id) if self.foreign_request_id.nil?
 
     # Create a new response object, link to the initial request
-    response = ApiResponse.new(
-      :request_type => self.request_type,
-      :api_request_id => self.id,
-      :foreign_request_id => response_xml.request_id,
-      :page_num => page_num
-    )
-
-    # If there is an error code, save the error in the record, sleep for some time to recover, and return the response id, indicating error
-    if response_xml.accessors.include?("code")
-      #puts "PROCESS_RESPONSE: error code #{response_xml.message}"
-      response.update_attributes!(:error_code => response_xml.code, :error_message => response_xml.message)
-      #sleep sleep_if_error
-      return response.id
+    api_response_attrs = {
+      request_type:       self.request_type,
+      api_request_id:     self.id,
+      foreign_request_id: mws_response.request_id,
+      next_token:         (mws_response.next_token rescue nil)
+    }
+    api_response = ApiResponse.create!(api_response_attrs.merge(extra_attrs))
+    
+    if mws_response.accessors.include?("code")
+      api_response.update_attributes!(error_code: mws_response.code, error_message: mws_response.message)
+      raise AmazonError # TODO should we be including the error details when raising? how?, mws_response.code
     end
-    #puts "no error code"
 
-    # assign next token if given
-    response.next_token = response_xml.next_token
-
-    # if this is a response containing orders
-    if self.request_type==::ApiRequest::LIST_ORDERS_MWS
-      response.last_updated_before = response_xml.last_updated_before
-      response.save!
-
-      #puts "    PROCESS_RESPONSE: ListOrders response contains #{response_xml.orders.count} orders"
-
-      # Process all orders first
-      amazon_orders = Array.new
-      response_xml.orders.each do |o|
-        amz_order = ::Order.find_by_foreign_order_id(o.amazon_order_id)
-        if amz_order.nil?
-          amz_order = ::Order.create(:foreign_order_id => o.amazon_order_id, :api_response_id=>response.id, :store_id=>self.store_id, :purchase_date=>o.purchase_date, :order_channel=>self.store.omx_keycode)
-          #puts "      PROCESS_RESPONSE: new order #{amz_order.foreign_order_id} created, id:#{amz_order.id}, adding to array"
-        else
-          #puts "      PROCESS_RESPONSE: existing order #{amz_order.foreign_order_id} being updated, id:#{amz_order.id}, adding to array"
-        end
-        h = o.as_hash
-        h[:api_response_id] = response.id #TODO creating an orphan api_response object by changing the response pointer
-
-        amz_order.update_attributes( h.select{|k,v| Order::PERMITTED_ORDER_FIELDS.include?(k) })
-
-        amazon_orders << amz_order
-        #puts "      PROCESS_RESPONSE: now #{amazon_orders.count} orders in array"
-      end
-
-      #puts "    PROCESS_RESPONSE: done building array, #{amazon_orders.count} orders"
-      # Then get item detail behind each order
-      sleep_time = ::ApiRequest.get_sleep_time_per_order(amazon_orders.count)
-      amazon_orders.each_with_index do |amz_order,i|
-        ProcessOrderWorker.perform_at((sleep_time*i).seconds.from_now, amz_order.id)
-      end
-      self.update_attributes(:processing_status=>"Complete")
-
-    # else if this is a response containing items
-    elsif self.request_type=="ListOrderItems"
-      response.foreign_order_id = response_xml.amazon_order_id
-      response.save!
-
-      #puts "            PROCESS_RESPONSE: ListOrderItems response contains #{response_xml.order_items.count} items"
-
-      amz_order = ::Order.find_by_foreign_order_id(response.foreign_order_id)
-      if !amz_order.nil?
-        response_xml.order_items.each do |i|
-          #puts "            PROCESS_RESPONSE: going to process item"
-          amz_order.process_order_item(i,response.id)
-        end
-        #puts "            PROCESS_RESPONSE: finished processing #{response_xml.order_items.count} items"
-        self.update_attributes(:processing_status=>'Complete')
-      else
-        self.update_attributes(:processing_status=>"Couldn't find #{response.foreign_order_id}")
-      end
-    end
-    #puts "PROCESS_RESPONSE: finished, returning next token or error code"
-    return response.next_token
+    return api_response
   end
+  
+  # accepts a working MWS connection and the XML model of the response, and incorporates this information into the database
+  # calls process_order or process_order_item in turn, which call the Amazon MWS API
+  def process_orders_page(mws_response)
+    api_response = self.create_api_response(mws_response, {last_updated_before: mws_response.last_updated_before})
+    mws_response.orders.each { |mws_order| self.process_order(mws_order, api_response.id) }
+    self.mark_complete
+    return mws_response.next_token
+  end
+
+  def process_order(mws_order, api_response_id)
+    order_hash = Order.build_hash(mws_order, api_response_id, self.store_id, self.store.omx_keycode) # TODO harcode omx        
+    order_id = Order.post_create(order_hash)
+    FetchItemsWorker.perform_async(self.store_id, order_id, mws_order.amazon_order_id, self.id)
+  end
+
+  def fetch_items(order_id, amazon_order_id)
+    self.init_mws_connection
+    mws_response = self.mws_connection.list_order_items(amazon_order_id: amazon_order_id)
+    self.fetch_items_next_page(order_id, self.process_items_page(order_id, mws_response))
+  end
+
+  def fetch_items_next_page(order_id, next_token)
+    return true if next_token.nil?
+    request = ApiRequest.create!(request_type:LIST_ORDER_ITEMS_NEXT, store_id:self.store_id, api_request_id:self.id)
+    self.init_mws_connection
+    mws_response = self.mws_connection.list_order_items_by_next_token(next_token: next_token)
+    self.fetch_items_next_page(order_id, request.process_items_page(order_id, mws_response))
+  end
+
+  def process_items_page(order_id, mws_response)
+    api_response = self.create_api_response(mws_response, {foreign_order_id:mws_response.amazon_order_id})    
+    mws_response.order_items.each { |mws_item| self.process_item(mws_item, api_response.id, order_id, mws_response.amazon_order_id) }
+    self.mark_complete
+    return mws_response.next_token
+  end
+
+  def process_item(mws_item, response_id, order_id, amazon_order_id)
+    item_hash = OrderItem.build_hash(mws_item, response_id, order_id, amazon_order_id)
+    order_item_id = OrderItem.post_create(item_hash)
+  end
+
+  def mark_complete; self.update_attributes!(processing_status:COMPLETE_STATUS) end
 
 =begin
 
@@ -395,4 +387,7 @@ class ApiRequest < ActiveRecord::Base
   def self.get_feed_wait(feed_length); ((feed_length**(2/5.0) + 30)*2).ceil.seconds end
 =end
   
+end
+
+class AmazonError < StandardError
 end
