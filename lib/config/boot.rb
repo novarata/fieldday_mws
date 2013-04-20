@@ -21,6 +21,8 @@ ActiveRecord::Base.establish_connection(
   :encoding => 'utf8'
 )  
 
+ITEM_SLEEP_TIME = ENV["RACK_ENV"]=='test' ? 0 : 6
+
 # REDIS
 #if ['production','staging'].include? ENV['RACK_ENV']
 #  uri = URI.parse(ENV["REDISTOGO_URL"])
