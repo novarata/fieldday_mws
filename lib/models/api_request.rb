@@ -5,8 +5,7 @@ class ApiRequest < ActiveRecord::Base
   LIST_ORDER_ITEMS = "ListOrderItems"
   LIST_ORDER_ITEMS_NEXT = "ListOrderItemsNext"
   
-  #LIST_ORDER_ITEMS_REQUEST_QUOTA = 15.0
-  #LIST_ORDER_ITEMS_RESTORE_RATE = 6.0
+  ORDER_ITEMS_SLEEP_TIME = 6
   #MAX_FAILURE_COUNT = 2
   #ORDER_FAIL_WAIT = 60
   ORDER_RESULTS_PER_PAGE = 100
@@ -111,13 +110,15 @@ class ApiRequest < ActiveRecord::Base
   end
 
   def process_order(mws_order, api_response_id)
-    order_hash = Order.build_hash(mws_order, api_response_id, self.store_id) # TODO harcode omx        
+    order_hash = Order.build_hash(mws_order, api_response_id, self.store_id)       
     order_id = Order.post_create(order_hash, self.params['orders_uri'])
-    FetchItemsWorker.perform_async(self.params.merge({ order_id:order_id, amazon_order_id:mws_order.amazon_order_id, parent_request_id:self.id}))
+    #FetchItemsWorker.perform_async(self.params.merge({ order_id:order_id, amazon_order_id:mws_order.amazon_order_id, parent_request_id:self.id}))
+    ApiRequest.fetch_items(self.params.merge({'order_id'=>order_id, 'amazon_order_id'=>mws_order.amazon_order_id, 'parent_request_id'=>self.id}))
   end
 
   def fetch_items(order_id, amazon_order_id)
     self.init_mws_connection
+    sleep ORDER_ITEMS_SLEEP_TIME
     mws_response = self.mws_connection.list_order_items(amazon_order_id: amazon_order_id)
     self.fetch_items_next_page(order_id, self.process_items_page(order_id, mws_response))
   end
@@ -132,6 +133,7 @@ class ApiRequest < ActiveRecord::Base
     return true if next_token.nil?
     request = self.create_sub_request(LIST_ORDER_ITEMS_NEXT)
     self.init_mws_connection
+    sleep ORDER_ITEMS_SLEEP_TIME
     mws_response = self.mws_connection.list_order_items_by_next_token(next_token: next_token)
     self.fetch_items_next_page(order_id, request.process_items_page(order_id, mws_response))
   end

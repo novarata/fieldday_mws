@@ -1,8 +1,8 @@
 require 'sinatra/base'
 require 'haml'
 require 'active_record'
-require 'sidekiq'
-require 'redis'
+#require 'sidekiq'
+#require 'redis'
 
 # TODO remove shared DB dependency for store, pass all needed store fields as api parameters
 # TODO pass callback URL as api parameter, including headers
@@ -28,14 +28,16 @@ class FielddayMws < Sinatra::Base
   post '/v1/order_items_requests' do
     p = order_items_requests_params(params)
     return 500 unless p
-    FetchItemsWorker.perform_async(p)
+    #FetchItemsWorker.perform_async(p)
+    ApiRequest.fetch_items(p)
     return 200
   end
 
   post '/v1/orders_requests' do
     p = orders_requests_params(params)
     return 500 unless p    
-    FetchOrdersWorker.perform_async(p)
+    #FetchOrdersWorker.perform_async(p)
+    ApiRequest.fetch_orders(p)
     return 200
   end
 

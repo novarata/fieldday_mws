@@ -13,7 +13,7 @@ require 'webmock/rspec'
 ENV['RACK_ENV'] = 'test'
 require_relative '../lib/config/boot.rb'
 
-require 'sidekiq/testing/inline' # do not delay sidekiq jobs
+#require 'sidekiq/testing/inline' # do not delay sidekiq jobs
 
 Dir["./spec/support/**/*.rb"].each {|f| require f}
 
@@ -28,8 +28,6 @@ RSpec.configure do |config|
 
   config.before(:each) do
     DatabaseCleaner.start
-    #FielddayMws.create_order_url = 'http://localhost:3000/orders'
-    #FielddayMws.create_order_item_url = 'http://localhost:3000/order_items'
   end
 
   config.after(:each) do
