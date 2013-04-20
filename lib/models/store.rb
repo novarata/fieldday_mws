@@ -1,22 +1,22 @@
-class Store < ActiveRecord::Base
-  attr_accessor :mws_connection
-  has_many :api_requests, :dependent => :destroy
+class Store
+  #attr_accessor :mws_connection
+  #has_many :api_requests, :dependent => :destroy
 
   FBA_CHANNEL = 'AFN'
   MFN_CHANNEL = 'MFN'
   FULFILLMENT_CHANNELS = [MFN_CHANNEL, FBA_CHANNEL]
   FULFILLMENT_STATUSES = ["Unshipped", "PartiallyShipped", "Shipped", "Unfulfillable"]
 
-  def init_store_connection
-    return unless self.mws_connection.nil? && self.mws_access_key.present?
+  #def init_store_connection
+  #  return unless self.mws_connection.nil? && self.mws_access_key.present?
     #Amazon::MWS::Base.debug=true
-    self.mws_connection = Amazon::MWS::Base.new(
-      "access_key"=>self.mws_access_key,
-      "secret_access_key"=>self.mws_secret_access_key,
-      "merchant_id"=>self.mws_merchant_id,
-      "marketplace_id"=>self.mws_marketplace_id )
-    return self.mws_connection
-  end
+  #  self.mws_connection = Amazon::MWS::Base.new(
+  #    "access_key"=>self.mws_access_key,
+  #    "secret_access_key"=>self.mws_secret_access_key,
+  #    "merchant_id"=>self.mws_merchant_id,
+  #    "marketplace_id"=>self.mws_marketplace_id )
+  #  return self.mws_connection
+  #end
 
 =begin
   # Try again to fetch the order items for orders that are missing items

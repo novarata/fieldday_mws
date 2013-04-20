@@ -9,6 +9,7 @@ class ApiRequest < ActiveRecord::Base
   #LIST_ORDER_ITEMS_RESTORE_RATE = 6.0
   #MAX_FAILURE_COUNT = 2
   #ORDER_FAIL_WAIT = 60
+  ORDER_RESULTS_PER_PAGE = 100
   FULLY_COMPLETED = 'fully_completed'
   STATUS_DONE = '_DONE_'
   COMPLETE_STATUS = 'Complete'
@@ -19,44 +20,49 @@ class ApiRequest < ActiveRecord::Base
 
   FEED_STEPS = %w( product_data product_relationship_data product_pricing product_image_data inventory_availability )
   FEED_MSGS = %w( Product Relationship Price ProductImage Inventory )
-  
+
   belongs_to :store
   belongs_to :parent_request, :class_name => "ApiRequest", :foreign_key => "api_request_id"
 
   has_many :child_requests, :class_name => "ApiRequest", :foreign_key => "api_request_id"
   has_many :api_responses
 
-  attr_accessor :mws_connection
-
-  delegate :store_type, to: :store  
+  attr_accessor :mws_connection, :params
     
   def init_mws_connection
-    return unless self.mws_connection.nil?
-    self.store.init_store_connection
-    self.mws_connection = self.store.mws_connection
+    return self.mws_connection unless self.mws_connection.nil?
+    #Amazon::MWS::Base.debug=true
+    self.mws_connection = Amazon::MWS::Base.new(
+      "access_key"=>self.params['access_key'],
+      "secret_access_key"=>self.params['secret_access_key'],
+      "merchant_id"=>self.params['merchant_id'],
+      "marketplace_id"=>self.params['marketplace_id'] )
+  end
+
+  def self.fetch_orders(p)
+    r = ApiRequest.create!(request_type:LIST_ORDERS, store_id:p['store_id'])
+    r.params = p
+    r.fetch_orders(p['time_from'], p['time_to'])
   end
     
-  def self.fetch_orders(store_id, time_from, time_to)
-    ApiRequest.create!(request_type:LIST_ORDERS, store_id:store_id).fetch_orders(time_from, time_to)
+  def self.fetch_items(p)
+    r = ApiRequest.create!(request_type:LIST_ORDER_ITEMS, store_id:p['store_id'], api_request_id:p['parent_request_id'])
+    r.params = p
+    r.fetch_items(p['order_id'], p['amazon_order_id'])
   end
-    
-  def self.fetch_items(store_id, order_id, amazon_order_id, parent_request_id)
-    ApiRequest.create!(request_type:LIST_ORDER_ITEMS, store_id:store_id, api_request_id:parent_request_id).fetch_items(order_id, amazon_order_id)
-  end
-    
+
   # accepts a working MWS connection and a ListOrdersResponse, and fully processes these orders
   # calls the Amazon MWS API
   def fetch_orders(time_from, time_to=nil)
     raise AmazonError unless time_from.present?
     self.init_mws_connection
-    s = self.store
 
     time_from = time_from.is_a?(String) ? DateTime.parse(time_from) : time_from    
     args = {  last_updated_after:   time_from.iso8601,
-              results_per_page:     s.order_results_per_page,
+              results_per_page:     ORDER_RESULTS_PER_PAGE,
               fulfillment_channel:  Store::FULFILLMENT_CHANNELS,
               order_status:         Store::FULFILLMENT_STATUSES,
-              marketplace_id:       [s.mws_marketplace_id]     #TODO this handles a single marketplace only
+              marketplace_id:       [self.params['marketplace_id']]     #TODO this handles a single marketplace only
             }
     if time_to.present?
       time_to = time_to.is_a?(String) ? DateTime.parse(time_to) : time_to
@@ -69,7 +75,7 @@ class ApiRequest < ActiveRecord::Base
 
   def fetch_orders_next_page(next_token)
     return true if next_token.nil?
-    request = ApiRequest.create!(request_type:LIST_ORDERS_NEXT, store_id:self.store_id, api_request_id:self.id)
+    request = self.create_sub_request(LIST_ORDERS_NEXT)
     self.init_mws_connection
     mws_response = self.mws_connection.list_orders_by_next_token(next_token: next_token)
     self.fetch_orders_next_page(request.process_orders_page(mws_response))
@@ -105,9 +111,9 @@ class ApiRequest < ActiveRecord::Base
   end
 
   def process_order(mws_order, api_response_id)
-    order_hash = Order.build_hash(mws_order, api_response_id, self.store_id, self.store.omx_keycode) # TODO harcode omx        
-    order_id = Order.post_create(order_hash)
-    FetchItemsWorker.perform_async(self.store_id, order_id, mws_order.amazon_order_id, self.id)
+    order_hash = Order.build_hash(mws_order, api_response_id, self.store_id) # TODO harcode omx        
+    order_id = Order.post_create(order_hash, self.params['orders_uri'])
+    FetchItemsWorker.perform_async(self.params.merge({ order_id:order_id, amazon_order_id:mws_order.amazon_order_id, parent_request_id:self.id}))
   end
 
   def fetch_items(order_id, amazon_order_id)
@@ -116,9 +122,15 @@ class ApiRequest < ActiveRecord::Base
     self.fetch_items_next_page(order_id, self.process_items_page(order_id, mws_response))
   end
 
+  def create_sub_request(request_type)
+    request = ApiRequest.create!(request_type:request_type, store_id:self.store_id, api_request_id:self.id)
+    request.params = self.params
+    return request
+  end
+  
   def fetch_items_next_page(order_id, next_token)
     return true if next_token.nil?
-    request = ApiRequest.create!(request_type:LIST_ORDER_ITEMS_NEXT, store_id:self.store_id, api_request_id:self.id)
+    request = self.create_sub_request(LIST_ORDER_ITEMS_NEXT)
     self.init_mws_connection
     mws_response = self.mws_connection.list_order_items_by_next_token(next_token: next_token)
     self.fetch_items_next_page(order_id, request.process_items_page(order_id, mws_response))
@@ -133,7 +145,7 @@ class ApiRequest < ActiveRecord::Base
 
   def process_item(mws_item, response_id, order_id, amazon_order_id)
     item_hash = OrderItem.build_hash(mws_item, response_id, order_id, amazon_order_id)
-    order_item_id = OrderItem.post_create(item_hash)
+    order_item_id = OrderItem.post_create(item_hash, self.params['order_items_uri'])
   end
 
   def mark_complete; self.update_attributes!(processing_status:COMPLETE_STATUS) end

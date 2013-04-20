@@ -17,6 +17,8 @@ require 'sidekiq/testing/inline' # do not delay sidekiq jobs
 
 Dir["./spec/support/**/*.rb"].each {|f| require f}
 
+def app; @app ||= FielddayMws end
+
 RSpec.configure do |config|
   config.include Rack::Test::Methods
   
@@ -26,8 +28,8 @@ RSpec.configure do |config|
 
   config.before(:each) do
     DatabaseCleaner.start
-    FielddayMws.create_order_url = 'http://localhost:3000/orders'
-    FielddayMws.create_order_item_url = 'http://localhost:3000/order_items'
+    #FielddayMws.create_order_url = 'http://localhost:3000/orders'
+    #FielddayMws.create_order_item_url = 'http://localhost:3000/order_items'
   end
 
   config.after(:each) do

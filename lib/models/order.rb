@@ -8,22 +8,20 @@ class Order
   :phone, :number_of_items_shipped, :number_of_items_unshipped, :marketplace_id, :buyer_name, :buyer_email,
   :shipment_service_level_category, :api_response_id]
   
-  def self.create_url; FielddayMws.create_order_url end
-  
   # Send a POST HTTP request to create an order
-  def self.post_create(order_hash)
-    response = RestClient.post Order.create_url, :order => order_hash
+  def self.post_create(order_hash, orders_uri)
+    response = FielddayMws.post_callback(orders_uri, {order:order_hash})
     return response[:order_id]
   end
 
   # Take an amazon format order object and some additional information and construct a hash suitable for POSTing
-  def self.build_hash(mws_order, response_id, store_id, channel)
+  def self.build_hash(mws_order, response_id, store_id)
     mws_order.as_hash.select{|k,v| PERMITTED_FIELDS.include?(k)}.merge({
       :foreign_order_id => mws_order.amazon_order_id,
       :api_response_id=>response_id,
       :store_id=>store_id,
       :purchase_date=>mws_order.purchase_date,
-      :order_channel=>channel
+      #:order_channel=>channel
     })
   end
 

@@ -4,8 +4,8 @@ include MwsHelpers
 describe ApiRequest do
 
   before :each do
-    @r = ApiRequest.create!(request_type:ApiRequest::LIST_ORDERS, store_id:1)
-    @c = stub_mws_connection
+    @r = stub_api_request
+    @c = @r.mws_connection
   end
 
   describe "fetching orders" do
@@ -102,9 +102,9 @@ describe ApiRequest do
       mws_order = stub_list_orders(@c).orders.first
       ApiRequest.any_instance.stub(:fetch_items).and_return(nil)
       o = FIXTURE_ORDERS.first
-      stub_request(:post, FielddayMws.create_order_url).with(body:o).to_return(status:[200, "OK"], body:{order_id:1})
+      stub_request(:post, @r.params['orders_uri']).with(body:o).to_return(status:[200, "OK"], body:{order_id:1})
       @r.process_order(mws_order, o['order']['api_response_id'])
-      WebMock.should have_requested(:post, FielddayMws.create_order_url).with(body: o).once
+      WebMock.should have_requested(:post, @r.params['orders_uri']).with(body: o).once
     end
   
   end
@@ -152,17 +152,25 @@ describe ApiRequest do
     it "should process item" do
       mws_item = stub_list_order_items(@c).order_items.first
       oi = FIXTURE_ITEMS.first
-      stub_request(:post, FielddayMws.create_order_item_url).with(body:oi).to_return(status:[200, "OK"], body:{order_item_id:1})
+      stub_request(:post, @r.params['order_items_uri']).with(body:oi).to_return(status:[200, "OK"], body:{order_item_id:1})
       @r.process_item(mws_item, oi['order_item']['api_response_id'], 1, oi['order_item']['foreign_order_id'])
-      WebMock.should have_requested(:post, FielddayMws.create_order_item_url).with(body: oi).once
+      WebMock.should have_requested(:post, @r.params['order_items_uri']).with(body: oi).once
     end
 
   end
   
   it "should init mws connection" do
-    @r.mws_connection.should be_nil
-    @r.init_mws_connection
-    @r.mws_connection.should be_a Amazon::MWS::Base
+    r = ApiRequest.create!(request_type:ApiRequest::LIST_ORDERS, store_id:1)
+    r.mws_connection.should be_nil
+    r.params = {
+      'access_key' => 'DUMMY',
+      'secret_access_key' => 'DUMMY',
+      'merchant_id' => 'DUMMY',
+      'marketplace_id' => 'ATVPDKIKX0DER'
+    }
+    r.mws_connection.should be_nil
+    r.init_mws_connection
+    r.mws_connection.should be_a Amazon::MWS::Base
   end
   
   it "should mark complete" do

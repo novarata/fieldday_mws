@@ -30,38 +30,38 @@ module MwsHelpers
     return response
   end
 
-  def stub_mws_store
-    s = Store.create(
-      store_type: 'MWS',
-      omx_store_code: 'Amazon.com MFN DUMMY',
-      name: 'FieldDay-1',
-      public_name: 'FieldDay-1',
-      mws_access_key: 'DUMMY',
-      mws_secret_access_key: 'DUMMY',
-      mws_merchant_id: 'DUMMY',
-      mws_marketplace_id: 'ATVPDKIKX0DER'
-    )
-    s.init_store_connection
-    s.mws_connection.stub(:post).and_return(xml_for('submit_feed',200))
-    s.mws_connection.stub(:get).and_return(xml_for('get_feed_submission_list',200))
-    s.mws_connection.stub(:get_feed_submission_result).and_return(GetFeedSubmissionResultResponse.format(xml_for('get_feed_submission_result',200)))    
-    c = s.mws_connection
-    Store.any_instance.stub(:mws_connection).and_return(c)
-    return s
+  @r = ApiRequest.create!(request_type:ApiRequest::LIST_ORDERS, store_id:1)
+
+  def stub_api_request
+    r = ApiRequest.create!(request_type:ApiRequest::LIST_ORDERS, store_id:1)
+    r.params = {
+      'access_key' => 'DUMMY',
+      'secret_access_key' => 'DUMMY',
+      'merchant_id' => 'DUMMY',
+      'marketplace_id' => 'ATVPDKIKX0DER',
+      'orders_uri' => 'http://localhost:3000/orders',
+      'order_items_uri' => 'http://localhost:3000/order_items',
+      'store_id' => 1, 
+      'time_from' => Time.now-1.hour
+    }
+        
+    c = r.init_mws_connection
+    c.stub(:post).and_return(xml_for('submit_feed',200))
+    c.stub(:get).and_return(xml_for('get_feed_submission_list',200))
+    c.stub(:get_feed_submission_result).and_return(GetFeedSubmissionResultResponse.format(xml_for('get_feed_submission_result',200)))    
+    return r
   end
 
   def stub_mws_connection
-    s = stub_mws_store
-    c = s.mws_connection
-    return c    
+    stub_api_request.mws_connection 
   end
 
-  def stub_mws_response
-    s = stub_mws_store
-    c = s.mws_connection
-    stub_orders_response(c)
-    #stub_products_response(c)
-    return s
+  def stub_mws_request
+    r = stub_api_request
+    #c = s.mws_connection
+    stub_orders_response(r.mws_connection)
+    #stub_products_response(r.mws_connection)
+    return r
   end
 
 =begin
