@@ -11,27 +11,26 @@ require 'rack/test'
 require 'webmock/rspec'
 
 ENV['RACK_ENV'] = 'test'
-require_relative '../lib/config/boot.rb'
 
-#require 'sidekiq/testing/inline' # do not delay sidekiq jobs
+require './lib/fieldday_mws.rb'
 
 Dir["./spec/support/**/*.rb"].each {|f| require f}
 
-def app; @app ||= FielddayMws end
+def app; @app ||= FielddayMws::App end
 
 RSpec.configure do |config|
   config.include Rack::Test::Methods
   
-  config.before(:suite) do
-    DatabaseCleaner.strategy = :truncation
-  end
+  #config.before(:suite) do
+  #  DatabaseCleaner.strategy = :truncation
+  #end
 
-  config.before(:each) do
-    DatabaseCleaner.start
-  end
+  #config.before(:each) do
+  #  DatabaseCleaner.start
+  #end
 
-  config.after(:each) do
-    DatabaseCleaner.clean
-  end
+  #config.after(:each) do
+  #  DatabaseCleaner.clean
+  #end
   
 end

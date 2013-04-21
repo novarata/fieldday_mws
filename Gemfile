@@ -3,8 +3,8 @@ source "https://rubygems.org"
 # Specify gem dependencies in ruby_omx.gemspec
 gemspec
 
-#gem 'amazon-mws', github: 'aew/amazon-mws'
-gem 'amazon-mws', path: '~/Code/amazon-mws'
+gem 'amazon-mws', github: 'aew/amazon-mws'
+#gem 'amazon-mws', path: '~/Code/amazon-mws'
 
 group :development do
   gem "shotgun"

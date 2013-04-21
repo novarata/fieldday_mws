@@ -1,22 +1,108 @@
 #encoding:UTF-8
-include Amazon::MWS
 
 module MwsHelpers
+  include Amazon::MWS
 
   ORDER_RESPONSE = {order:{id:1}}.to_json
   ORDER_ITEM_RESPONSE = {order_item:{id:1}}.to_json
-  
-  FIXTURE_ORDERS = [
-    {"order"=>{"purchase_date"=>"2010-10-05T00:06:07+00:00", "last_update_date"=>"2010-10-05T12:43:16+00:00", "order_status"=>"Unshipped", "fulfillment_channel"=>"MFN", "sales_channel"=>"Checkout by Amazon", "order_channel"=>"", "ship_service_level"=>"Std DE Dom", "amount"=>"4.78", "currency_code"=>"USD", "name"=>"John Smith", "address_line_1"=>"2700 First Avenue", "address_line_2"=>"", "address_line_3"=>"", "city"=>"Seattle", "county"=>"", "district"=>"", "state_or_region"=>"WA", "postal_code"=>"98102", "country_code"=>"", "phone"=>"", "number_of_items_shipped"=>"0", "number_of_items_unshipped"=>"1", "marketplace_id"=>"ATVPDKIKX0DER", "buyer_name"=>"Amazon User", "buyer_email"=>"5vlh04mgfmjh9h5@marketplace.amazon.com", "shipment_service_level_category"=>"", "foreign_order_id"=>"058-1233752-8214740", "api_response_id"=>"1"}},
-    {"order"=>{"purchase_date"=>"2012-04-18T04:07:38+00:00", "last_update_date"=>"2012-04-18T04:37:56+00:00", "order_status"=>"Unshipped", "fulfillment_channel"=>"MFN", "sales_channel"=>"Amazon.com", "order_channel"=>"", "ship_service_level"=>"Std Cont US Street Addr", "amount"=>"57.07", "currency_code"=>"USD", "name"=>"Mike Smith", "address_line_1"=>"781 2nd Ave", "address_line_2"=>"", "address_line_3"=>"", "city"=>"New York", "county"=>"", "district"=>"", "state_or_region"=>"NEW YORK", "postal_code"=>"11222", "country_code"=>"US", "phone"=>"30553423431", "number_of_items_shipped"=>"0", "number_of_items_unshipped"=>"1", "marketplace_id"=>"ATVPDKIKX0DER", "buyer_name"=>"John Smith", "buyer_email"=>"8v234234324234tyxv8@marketplace.amazon.com", "shipment_service_level_category"=>"Standard", "foreign_order_id"=>"134-5622222326-223434325", "api_response_id"=>"4"}}
-  ]
 
-  FIXTURE_ITEMS = [
-    {"order_item"=>{"asin"=>"B034534547IMY", "seller_sku"=>"024345345651", "title"=>"Wilson Basketball", "quantity_ordered"=>"1", "quantity_shipped"=>"0", "item_price"=>"57.07", "item_price_currency"=>"USD", "shipping_price"=>"0.0", "shipping_price_currency"=>"USD", "gift_price"=>"0.0", "gift_price_currency"=>"USD", "item_tax"=>"0.0", "item_tax_currency"=>"USD", "shipping_tax"=>"0.0", "shipping_tax_currency"=>"USD", "gift_tax"=>"0.0", "gift_tax_currency"=>"USD", "shipping_discount"=>"0.0", "shipping_discount_currency"=>"USD", "promotion_discount"=>"0.0", "promotion_discount_currency"=>"USD", "gift_wrap_level"=>"", "gift_message_text"=>"", "foreign_order_item_id"=>"4067343455435394", "api_response_id"=>"2", "order_id"=>"1", "foreign_order_id"=>"058-1233752-8214740"}},
-    {"order_item"=>{"asin"=>"B034534547IMY", "seller_sku"=>"024345345651", "title"=>"Wilson Basketball", "quantity_ordered"=>"1", "quantity_shipped"=>"0", "item_price"=>"57.07", "item_price_currency"=>"USD", "shipping_price"=>"0.0", "shipping_price_currency"=>"USD", "gift_price"=>"0.0", "gift_price_currency"=>"USD", "item_tax"=>"0.0", "item_tax_currency"=>"USD", "shipping_tax"=>"0.0", "shipping_tax_currency"=>"USD", "gift_tax"=>"0.0", "gift_tax_currency"=>"USD", "shipping_discount"=>"0.0", "shipping_discount_currency"=>"USD", "promotion_discount"=>"0.0", "promotion_discount_currency"=>"USD", "gift_wrap_level"=>"", "gift_message_text"=>"", "foreign_order_item_id"=>"406733453459999999", "api_response_id"=>"3", "order_id"=>"1", "foreign_order_id"=>"058-1233752-8214740"}},
-    {"order_item"=>{"asin"=>"B034534547IMY", "seller_sku"=>"024345345651", "title"=>"Wilson Basketball", "quantity_ordered"=>"1", "quantity_shipped"=>"0", "item_price"=>"57.07", "item_price_currency"=>"USD", "shipping_price"=>"0.0", "shipping_price_currency"=>"USD", "gift_price"=>"0.0", "gift_price_currency"=>"USD", "item_tax"=>"0.0", "item_tax_currency"=>"USD", "shipping_tax"=>"0.0", "shipping_tax_currency"=>"USD", "gift_tax"=>"0.0", "gift_tax_currency"=>"USD", "shipping_discount"=>"0.0", "shipping_discount_currency"=>"USD", "promotion_discount"=>"0.0", "promotion_discount_currency"=>"USD", "gift_wrap_level"=>"", "gift_message_text"=>"", "foreign_order_item_id"=>"4067343455435394", "api_response_id"=>"5", "order_id"=>"1", "foreign_order_id"=>"058-1233752-8214740"}},
-    {"order_item"=>{"asin"=>"B034534547IMY", "seller_sku"=>"024345345651", "title"=>"Wilson Basketball", "quantity_ordered"=>"1", "quantity_shipped"=>"0", "item_price"=>"57.07", "item_price_currency"=>"USD", "shipping_price"=>"0.0", "shipping_price_currency"=>"USD", "gift_price"=>"0.0", "gift_price_currency"=>"USD", "item_tax"=>"0.0", "item_tax_currency"=>"USD", "shipping_tax"=>"0.0", "shipping_tax_currency"=>"USD", "gift_tax"=>"0.0", "gift_tax_currency"=>"USD", "shipping_discount"=>"0.0", "shipping_discount_currency"=>"USD", "promotion_discount"=>"0.0", "promotion_discount_currency"=>"USD", "gift_wrap_level"=>"", "gift_message_text"=>"", "foreign_order_item_id"=>"406733453459999999", "api_response_id"=>"6", "order_id"=>"1", "foreign_order_id"=>"058-1233752-8214740"}},
-  ]
+  FIXTURE_ITEM = {
+    asin: "B034534547IMY", 
+    seller_sku: "024345345651", 
+    title: "Wilson Basketball", 
+    quantity_ordered: 1, 
+    quantity_shipped: 0, 
+    item_price: 57.07, 
+    item_price_currency: "USD", 
+    shipping_price: 0.0, 
+    shipping_price_currency: "USD", 
+    gift_price: 0.0, 
+    gift_price_currency: "USD", 
+    item_tax: 0.0, 
+    item_tax_currency: "USD", 
+    shipping_tax: 0.0, 
+    shipping_tax_currency: "USD", 
+    gift_tax: 0.0, 
+    gift_tax_currency: "USD", 
+    shipping_discount: 0.0, 
+    shipping_discount_currency: "USD", 
+    promotion_discount: 0.0, 
+    promotion_discount_currency: "USD", 
+    gift_wrap_level: nil, 
+    gift_message_text: nil, 
+    foreign_order_item_id: "4067343455435394", 
+    foreign_order_id: "058-1233752-8214740"
+  }
+  FIXTURE_ITEM2 = FIXTURE_ITEM.merge({foreign_order_item_id:'406733453459999999'})
+  
+  FIXTURE_ORDER1 = {
+    :purchase_date => "2010-10-05T00:06:07+00:00",
+    :last_update_date=>"2010-10-05T12:43:16+00:00", 
+    :order_status=>"Unshipped", 
+    :fulfillment_channel=>"MFN", 
+    :sales_channel=>"Checkout by Amazon", 
+    :order_channel=>nil, 
+    :ship_service_level=>"Std DE Dom", 
+    :amount=>4.78, 
+    :currency_code=>"USD", 
+    :name=>"John Smith", 
+    :address_line_1=>"2700 First Avenue", 
+    :address_line_2=>nil, 
+    :address_line_3=>nil, 
+    :city=>"Seattle", 
+    :county=>nil, 
+    :district=>nil, 
+    :state_or_region=>"WA", 
+    :postal_code=>"98102", 
+    :country_code=>nil, 
+    :phone=>nil, 
+    :number_of_items_shipped=>0, 
+    :number_of_items_unshipped=>1, 
+    :marketplace_id=>"ATVPDKIKX0DER", 
+    :buyer_name=>"Amazon User", 
+    :buyer_email=>"5vlh04mgfmjh9h5@marketplace.amazon.com", 
+    :shipment_service_level_category=>nil, 
+    :foreign_order_id=>"058-1233752-8214740",
+    :order_items_attributes=>[FIXTURE_ITEM, FIXTURE_ITEM2]
+  }
+
+  FIXTURE_ORDER2 = {
+    :purchase_date=>"2012-04-18T04:07:38+00:00", 
+    :last_update_date=>"2012-04-18T04:37:56+00:00", 
+    :order_status=>"Unshipped", 
+    :fulfillment_channel=>"MFN", 
+    :sales_channel=>"Amazon.com", 
+    :order_channel=>nil, 
+    :ship_service_level=>"Std Cont US Street Addr", 
+    :amount=>57.07,
+    :currency_code=>"USD", 
+    :name=>"Mike Smith", 
+    :address_line_1=>"781 2nd Ave", 
+    :address_line_2=>nil, 
+    :address_line_3=>nil, 
+    :city=>"New York", 
+    :county=>nil, 
+    :district=>nil, 
+    :state_or_region=>"NEW YORK", 
+    :postal_code=>"11222", 
+    :country_code=>"US", 
+    :phone=>"30553423431", 
+    :number_of_items_shipped=>0,
+    :number_of_items_unshipped=>1,
+    :marketplace_id=>"ATVPDKIKX0DER", 
+    :buyer_name=>"John Smith", 
+    :buyer_email=>"8v234234324234tyxv8@marketplace.amazon.com", 
+    :shipment_service_level_category=>"Standard", 
+    :foreign_order_id=>"134-5622222326-223434325", 
+    :order_items_attributes=>[FIXTURE_ITEM, FIXTURE_ITEM2]
+  }
+
+  CONNECTION_PARAMS = {
+    'access_key' => 'DUMMY',
+    'secret_access_key' => 'DUMMY',
+    'merchant_id' => 'DUMMY',
+    'marketplace_id' => 'ATVPDKIKX0DER',    
+  }
 
   def xml_for(name, code)
     file = File.open(Pathname.new(File.dirname(__FILE__)).expand_path.dirname.join("fixtures/xml/#{name}.xml"),'rb')
@@ -33,21 +119,16 @@ module MwsHelpers
     return response
   end
 
-  @r = ApiRequest.create!(request_type:ApiRequest::LIST_ORDERS, store_id:1)
-
   def stub_api_request
-    r = ApiRequest.create!(request_type:ApiRequest::LIST_ORDERS, store_id:1)
-    r.params = {
-      'access_key' => 'DUMMY',
-      'secret_access_key' => 'DUMMY',
-      'merchant_id' => 'DUMMY',
-      'marketplace_id' => 'ATVPDKIKX0DER',
+    #r = ApiRequest.create!(request_type:ApiRequest::LIST_ORDERS, store_id:1)
+    r = FielddayMws::ApiRequest.new
+    r.store_id = 1
+    r.params = CONNECTION_PARAMS.merge({
       'orders_uri' => 'http://localhost:3000/orders',
-      'order_items_uri' => 'http://localhost:3000/order_items',
       'store_id' => 1, 
       'time_from' => Time.now-1.hour
-    }
-        
+    })
+  
     c = r.init_mws_connection
     c.stub(:post).and_return(xml_for('submit_feed',200))
     c.stub(:get).and_return(xml_for('get_feed_submission_list',200))
@@ -70,7 +151,7 @@ module MwsHelpers
 =begin
   def stub_products_response(c)
     c.stub(:post).and_return(xml_for('submit_feed',200))
-    submit_feed_response = c.submit_feed(ApiRequest::FEED_STEPS[0].to_sym, ApiRequest::FEED_MSGS[0], [{}])
+    submit_feed_response = c.submit_feed(FielddayMws::ApiRequest::FEED_STEPS[0].to_sym, FielddayMws::ApiRequest::FEED_MSGS[0], [{}])
     submit_feed_response.should be_a SubmitFeedResponse
     Amazon::MWS::Base.any_instance.stub(:submit_feed).and_return(submit_feed_response)
 
@@ -93,12 +174,20 @@ module MwsHelpers
     stub_list_order_items_next_token(c)
   end
 
+  def stub_get_orders(c)
+    c.stub(:post).and_return(xml_for('list_orders',200))
+    orders_response = c.get_orders({:amazon_order_id => ['058-1233752-8214740']})
+    orders_response.should be_a RequestOrdersResponse
+    Amazon::MWS::Base.any_instance.stub(:get_orders).and_return(orders_response)
+    return orders_response
+  end
+
   def stub_list_orders(c)
     c.stub(:post).and_return(xml_for('list_orders',200))
     orders_response = c.list_orders(
       :last_updated_after => Time.now.iso8601,
       :results_per_page => 100,
-      :fulfillment_channel => Store::FULFILLMENT_CHANNELS,
+      :fulfillment_channel => FielddayMws::ApiRequest::FULFILLMENT_CHANNELS,
       :order_status => ["Unshipped", "PartiallyShipped", "Shipped", "Unfulfillable"],
       :marketplace_id => ['ATVPDKIKX0DER']
     )

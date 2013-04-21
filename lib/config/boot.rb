@@ -1,13 +1,23 @@
+require 'sinatra/base'
+require 'sinatra/json'
+require 'haml'
+#require 'active_record'
+require 'json'
+require 'oj'
+#require 'redis'
+
 # ENVIRONMENT
 ENV["RACK_ENV"] ||= "development"
 require 'bundler'
 Bundler.setup
 Bundler.require(:default, ENV["RACK_ENV"].to_sym)
 
-# INCLUDE FILES
-Dir["./lib/**/*.rb"].each { |f| require f }
+require_relative '../models/api_requesd'
+require_relative '../models/order'
+require_relative '../models/order_item'
 
 # ACTIVE RECORD
+=begin
 local_db_name = ENV["RACK_ENV"]=='test' ? 'fieldday_test' : 'fieldday_dev'
 db = URI.parse(ENV['DATABASE_URL'] || "postgres://localhost/#{local_db_name}")
 ActiveRecord::Base.establish_connection(
@@ -18,9 +28,8 @@ ActiveRecord::Base.establish_connection(
   :password => db.password,
   :database => db.path[1..-1],
   :encoding => 'utf8'
-)  
-
-ITEM_SLEEP_TIME = ENV["RACK_ENV"]=='test' ? 0 : 6
+)
+=end
 
 # REDIS
 #if ['production','staging'].include? ENV['RACK_ENV']

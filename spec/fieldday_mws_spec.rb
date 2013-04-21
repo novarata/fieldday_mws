@@ -2,10 +2,11 @@
 require 'spec_helper'
 include MwsHelpers
 
-require_relative "../lib/fieldday_mws.rb"
-require_relative "../lib/models/store.rb"
+#require_relative "../lib/fieldday_mws.rb"
+#require_relative "../lib/models/api_requesd.rb"
+#require_relative "../lib/models/store.rb"
 
-describe "FielddayMws" do
+describe "App" do
 
   #describe "GET '/'" do
   #  it "should be successful" do
@@ -14,66 +15,47 @@ describe "FielddayMws" do
   #    last_response.should be_ok
   #  end
   #end
-  
-  describe "POST '/v1/orders_requests" do
-    it "should successfully fetch multiple orders with valid inputs" do
 
+  describe "POST '/v1/order_requests" do
+    it "should successfully fetch specified orders with valid inputs" do
       r = stub_mws_request
+      c = r.init_mws_connection
+      orders_response = stub_get_orders(c)
+      orders_response.stub(:next_token).and_return(nil) # Pretend there was no next token
+      
+      stub_request(:post, r.params['orders_uri']).with(body:{order:FIXTURE_ORDER1}.to_json).to_return(status:[200, "OK"], body:ORDER_RESPONSE)
 
-      FIXTURE_ORDERS.each do |o|
-        stub_request(:post, r.params['orders_uri']).with(body:o).to_return(status:[200, "OK"], body:ORDER_RESPONSE)
-      end
-
-      FIXTURE_ITEMS.each do |oi|
-        stub_request(:post, r.params['order_items_uri']).with(body:oi).to_return(status:[200, "OK"], body:ORDER_ITEM_RESPONSE)
-      end
-
-      expect {
-        expect {
-          post '/v1/orders_requests', r.params.to_json
-        }.to change(ApiRequest, :count).by(6)
-      }.to change(ApiResponse, :count).by(6)
-
-      FIXTURE_ORDERS.each do |o|
-        WebMock.should have_requested(:post, r.params['orders_uri']).with(body: o).once      
-      end
-
-      FIXTURE_ITEMS.each do |oi|
-        WebMock.should have_requested(:post, r.params['order_items_uri']).with(body: oi).once      
-      end
+      p = CONNECTION_PARAMS.merge({
+        'orders_uri' => 'http://localhost:3000/orders',
+        'store_id' => 1,
+        'amazon_order_id' => 'TESTING',
+      })
+    
+      post '/v1/order_requests', p.to_json
+      WebMock.should have_requested(:post, r.params['orders_uri']).once
     end
     
-    it "should error on invalid input" do
-      post '/v1/orders_requests'
+    it "should error on missing params entirely" do
+      post '/v1/order_requests'
       last_response.should_not be_ok
+      last_response.body.should eq 'A JSON text must at least contain two octets!'
     end
   end
 
-  describe "POST '/v1/order_items_requests" do
-    it "should successfully fetch items for a single order with valid inputs" do
+  
+  describe "POST '/v1/orders_requests" do
+    it "should successfully fetch multiple orders with valid inputs" do
       r = stub_mws_request
-      stub_request(:post, r.params['order_items_uri']).to_return(status:[200, "OK"], body:ORDER_ITEM_RESPONSE)
-      
-      expect {
-        expect {
-          post '/v1/order_items_requests', r.params.merge({ 'order_id' => 1, 'amazon_order_id' => 1 }).to_json
-        }.to change(ApiRequest, :count).by(2)
-      }.to change(ApiResponse, :count).by(2)
-
-      WebMock.should have_requested(:post, r.params['order_items_uri']).twice
-      WebMock.should_not have_requested(:post, r.params['orders_uri'])
-
-      # Confirm request tree
-      r = ApiRequest.order(:id).last
-      r.child_requests.count.should eq 0
-      r.api_responses.count.should eq 1
-      r.parent_request.should_not be_nil
-      r.parent_request.api_responses.count.should eq 1
+      stub_request(:post, r.params['orders_uri']).with(body:{order:FIXTURE_ORDER1}.to_json).to_return(status:[200, "OK"], body:ORDER_RESPONSE)
+      stub_request(:post, r.params['orders_uri']).with(body:{order:FIXTURE_ORDER2}.to_json).to_return(status:[200, "OK"], body:ORDER_RESPONSE)
+      post '/v1/orders_requests', r.params.to_json
+      WebMock.should have_requested(:post, r.params['orders_uri']).twice
     end
     
-    it "should error on invalid input" do
-      post '/v1/order_items_requests'
+    it "should error on missing params entirely" do
+      post '/v1/orders_requests'
       last_response.should_not be_ok
+      last_response.body.should eq 'A JSON text must at least contain two octets!'
     end
   end
 

@@ -1,14 +1,14 @@
 require 'spec_helper'
 include MwsHelpers
 
-describe Order do
+describe FielddayMws::Order do
 
   it "should post and order to localhost" do
     order_id = 1
     orders_uri = 'blah'
     
-    stub_request(:post, orders_uri).to_return(status:[200, "OK"], body:{ order:{id:1}}.to_json)
-    order_id = Order.post_create({ :foreign_order_id => 'asdlfkjasdf' }, orders_uri)
+    stub_request(:post, orders_uri).to_return(status:[200, "OK"], body:ORDER_RESPONSE)
+    order_id = FielddayMws::Order.post_create({ :foreign_order_id => 'asdlfkjasdf' }, orders_uri)
     order_id.should eq order_id
   end
 
