@@ -11,17 +11,15 @@ class Order
   # Send a POST HTTP request to create an order
   def self.post_create(order_hash, orders_uri)
     response = FielddayMws.post_callback(orders_uri, {order:order_hash})
-    return response[:order_id]
+    JSON.parse(response.body)["order"]["id"]
   end
 
   # Take an amazon format order object and some additional information and construct a hash suitable for POSTing
   def self.build_hash(mws_order, response_id, store_id)
     mws_order.as_hash.select{|k,v| PERMITTED_FIELDS.include?(k)}.merge({
-      :foreign_order_id => mws_order.amazon_order_id,
-      :api_response_id=>response_id,
-      :store_id=>store_id,
-      :purchase_date=>mws_order.purchase_date,
-      #:order_channel=>channel
+      foreign_order_id: mws_order.amazon_order_id,
+      api_response_id:  response_id,
+      purchase_date:    mws_order.purchase_date,
     })
   end
 

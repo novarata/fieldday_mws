@@ -9,7 +9,7 @@ class OrderItem
   # Send a POST HTTP request to create an order item
   def self.post_create(item_hash, order_items_uri)
     response = FielddayMws.post_callback(order_items_uri, {order_item:item_hash})
-    return response[:order_item_id]
+    JSON.parse(response.body)["order_item"]["id"]
   end
 
   # Take an amazon format order item object and some additional information and construct a hash suitable for POSTing

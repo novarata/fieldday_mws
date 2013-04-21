@@ -11,13 +11,12 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_dependency "sinatra"
+  s.add_dependency "sinatra-contrib"
   s.add_dependency "activerecord", '4.0.0.beta1'
   s.add_dependency "pg"
   s.add_dependency "oj"
   s.add_dependency "puma"
   s.add_dependency "haml"
-  #s.add_dependency "sidekiq"
-  #s.add_dependency "sidekiq-throttler"
   #s.add_dependency "redis-store"
   s.add_dependency "rest-client"
 end

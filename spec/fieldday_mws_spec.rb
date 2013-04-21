@@ -21,16 +21,16 @@ describe "FielddayMws" do
       r = stub_mws_request
 
       FIXTURE_ORDERS.each do |o|
-        stub_request(:post, r.params['orders_uri']).with(body:o).to_return(status:[200, "OK"], body:{order_id:1})
+        stub_request(:post, r.params['orders_uri']).with(body:o).to_return(status:[200, "OK"], body:ORDER_RESPONSE)
       end
 
       FIXTURE_ITEMS.each do |oi|
-        stub_request(:post, r.params['order_items_uri']).with(body:oi).to_return(status:[200, "OK"], body:{order_item_id:1})
+        stub_request(:post, r.params['order_items_uri']).with(body:oi).to_return(status:[200, "OK"], body:ORDER_ITEM_RESPONSE)
       end
 
       expect {
         expect {
-          post '/v1/orders_requests', r.params
+          post '/v1/orders_requests', r.params.to_json
         }.to change(ApiRequest, :count).by(6)
       }.to change(ApiResponse, :count).by(6)
 
@@ -52,11 +52,11 @@ describe "FielddayMws" do
   describe "POST '/v1/order_items_requests" do
     it "should successfully fetch items for a single order with valid inputs" do
       r = stub_mws_request
-      stub_request(:post, r.params['order_items_uri']).to_return(status:[200, "OK"], body:{order_item_id:1})
+      stub_request(:post, r.params['order_items_uri']).to_return(status:[200, "OK"], body:ORDER_ITEM_RESPONSE)
       
       expect {
         expect {
-          post '/v1/order_items_requests', r.params.merge({ 'order_id' => 1, 'amazon_order_id' => 1 })
+          post '/v1/order_items_requests', r.params.merge({ 'order_id' => 1, 'amazon_order_id' => 1 }).to_json
         }.to change(ApiRequest, :count).by(2)
       }.to change(ApiResponse, :count).by(2)
 

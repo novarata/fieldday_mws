@@ -5,9 +5,6 @@ class ApiRequest < ActiveRecord::Base
   LIST_ORDER_ITEMS = "ListOrderItems"
   LIST_ORDER_ITEMS_NEXT = "ListOrderItemsNext"
   
-  #ORDER_ITEMS_SLEEP_TIME = 6
-  #MAX_FAILURE_COUNT = 2
-  #ORDER_FAIL_WAIT = 60
   ORDER_RESULTS_PER_PAGE = 100
   FULLY_COMPLETED = 'fully_completed'
   STATUS_DONE = '_DONE_'
@@ -30,7 +27,6 @@ class ApiRequest < ActiveRecord::Base
     
   def init_mws_connection
     return self.mws_connection unless self.mws_connection.nil?
-    #Amazon::MWS::Base.debug=true
     self.mws_connection = Amazon::MWS::Base.new(
       "access_key"=>self.params['access_key'],
       "secret_access_key"=>self.params['secret_access_key'],
@@ -55,7 +51,6 @@ class ApiRequest < ActiveRecord::Base
   def fetch_orders(time_from, time_to=nil)
     raise AmazonError unless time_from.present?
     self.init_mws_connection
-
     time_from = time_from.is_a?(String) ? DateTime.parse(time_from) : time_from    
     args = {  last_updated_after:   time_from.iso8601,
               results_per_page:     ORDER_RESULTS_PER_PAGE,
@@ -67,8 +62,7 @@ class ApiRequest < ActiveRecord::Base
       time_to = time_to.is_a?(String) ? DateTime.parse(time_to) : time_to
       args.merge!({ last_updated_before: time_to.iso8601 })
     end
-
-    mws_response = self.mws_connection.list_orders(*args)
+    mws_response = self.mws_connection.list_orders(args)
     self.fetch_orders_next_page(self.process_orders_page(mws_response))
   end
 
@@ -94,7 +88,7 @@ class ApiRequest < ActiveRecord::Base
     
     if mws_response.accessors.include?("code")
       api_response.update_attributes!(error_code: mws_response.code, error_message: mws_response.message)
-      raise AmazonError # TODO should we be including the error details when raising? how?, mws_response.code
+      raise AmazonError, "#{mws_response.code}: #{mws_response.message}"
     end
 
     return api_response
@@ -103,7 +97,7 @@ class ApiRequest < ActiveRecord::Base
   # accepts a working MWS connection and the XML model of the response, and incorporates this information into the database
   # calls process_order or process_order_item in turn, which call the Amazon MWS API
   def process_orders_page(mws_response)
-    api_response = self.create_api_response(mws_response, {last_updated_before: mws_response.last_updated_before})
+    api_response = self.create_api_response(mws_response, {last_updated_before: (mws_response.last_updated_before rescue nil)})
     mws_response.orders.each { |mws_order| self.process_order(mws_order, api_response.id) }
     self.mark_complete
     return mws_response.next_token

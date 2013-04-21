@@ -102,7 +102,7 @@ describe ApiRequest do
       mws_order = stub_list_orders(@c).orders.first
       ApiRequest.any_instance.stub(:fetch_items).and_return(nil)
       o = FIXTURE_ORDERS.first
-      stub_request(:post, @r.params['orders_uri']).with(body:o).to_return(status:[200, "OK"], body:{order_id:1})
+      stub_request(:post, @r.params['orders_uri']).with(body:o).to_return(status:[200, "OK"], body:{order:{id:1}}.to_json)
       @r.process_order(mws_order, o['order']['api_response_id'])
       WebMock.should have_requested(:post, @r.params['orders_uri']).with(body: o).once
     end
@@ -152,7 +152,7 @@ describe ApiRequest do
     it "should process item" do
       mws_item = stub_list_order_items(@c).order_items.first
       oi = FIXTURE_ITEMS.first
-      stub_request(:post, @r.params['order_items_uri']).with(body:oi).to_return(status:[200, "OK"], body:{order_item_id:1})
+      stub_request(:post, @r.params['order_items_uri']).with(body:oi).to_return(status:[200, "OK"], body:{ order_item:{id:1}}.to_json)
       @r.process_item(mws_item, oi['order_item']['api_response_id'], 1, oi['order_item']['foreign_order_id'])
       WebMock.should have_requested(:post, @r.params['order_items_uri']).with(body: oi).once
     end
