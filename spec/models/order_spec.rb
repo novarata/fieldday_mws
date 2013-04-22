@@ -12,4 +12,8 @@ describe FielddayMws::Order do
     order_id.should eq order_id
   end
 
+  it "should build a hash" do
+    
+  end
+  
 end

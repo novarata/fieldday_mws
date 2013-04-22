@@ -20,17 +20,12 @@ def app; @app ||= FielddayMws::App end
 
 RSpec.configure do |config|
   config.include Rack::Test::Methods
-  
-  #config.before(:suite) do
-  #  DatabaseCleaner.strategy = :truncation
-  #end
 
-  #config.before(:each) do
-  #  DatabaseCleaner.start
-  #end
-
-  #config.after(:each) do
-  #  DatabaseCleaner.clean
-  #end
+  # Stub requests to any localhost route to this application
+  # Any outbound requests should be stubbed separately (and not match localhost)
+  config.before(:each) do
+    FielddayMws::App.base_uri = "http://localhost"
+    stub_request(:any, /localhost/).to_rack(app)
+  end
   
 end

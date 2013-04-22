@@ -16,7 +16,7 @@ module FielddayMws
     end
 
     # Take an amazon format order object and some additional information and construct a hash suitable for POSTing
-    def self.build_hash(mws_order, items, store_id)
+    def self.build_hash(mws_order, items)
       mws_order.as_hash.select{|k,v| PERMITTED_FIELDS.include?(k)}.merge({
         foreign_order_id: mws_order.amazon_order_id,
         order_items_attributes: items

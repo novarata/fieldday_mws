@@ -16,5 +16,6 @@ group :test do
   gem 'simplecov'
   #gem 'fakeredis', :require => "fakeredis/rspec"
   gem 'database_cleaner'
+  gem 'capybara'
   gem 'webmock'
 end

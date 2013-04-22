@@ -15,7 +15,7 @@ module FielddayMws
     set :show_exceptions, false if development?
   
     class << self
-      attr_accessor :host
+      attr_accessor :base_uri
 
       def post_callback(uri, payload)
         RestClient.post uri, payload, :content_type => :json, :accept => :json#, 'HTTP_AUTHORIZATION' => "Basic #{Base64.encode64("#{auth_token}:X")}"
@@ -35,28 +35,21 @@ module FielddayMws
         p = order_requests_params(params)
         FielddayMws::ApiRequest.fetch_order(p)
         return 200
-      rescue ArgumentError, JSON::ParserError
+      rescue ArgumentError, JSON::ParserError => e
         logger.fatal $!
-        #raise $!
-        return [500, {"Content-Type" => 'application/json'}, $!.to_s]      
+        return error 400, e.message.to_json
       end
     end
 
     post '/v1/orders_requests' do
       begin
         params = JSON.parse(request.env["rack.input"].read)
-        #puts params.inspect
         p = orders_requests_params(params)
-        #puts p.inspect
-        #logger.info params.inspect
-        #logger.info p.inspect
-        logger.fatal "doing the vetch orders request"
-        FielddayMws::ApiRequest.vetch_orders(p)
+        FielddayMws::ApiRequest.fetch_orders(p)
         return 200
-      rescue ArgumentError, JSON::ParserError
+      rescue ArgumentError, JSON::ParserError => e
         logger.fatal $!
-        #raise $!
-        return [500, {"Content-Type" => 'application/json'}, $!.to_s]
+        return error 400, e.message.to_json
       end
     end
 
@@ -70,13 +63,13 @@ module FielddayMws
   
     def order_requests_params(params)
       required = %w(amazon_order_id access_key secret_access_key merchant_id marketplace_id orders_uri)
-      valid = required + %w(store_id)
+      valid = required
       valid_params(required, valid, params)
     end
   
     def orders_requests_params(params)
       required = %w(time_from access_key secret_access_key merchant_id marketplace_id orders_uri)
-      valid = required + %w(time_to store_id)
+      valid = required + %w(time_to)
       valid_params(required, valid, params)
     end
 

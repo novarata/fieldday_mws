@@ -31,7 +31,7 @@ describe FielddayMws::ApiRequest do
     it "should fetch orders from params" do
       FielddayMws::ApiRequest.any_instance.should_receive(:fetch_orders).once      
       #expect {
-        FielddayMws::ApiRequest.vetch_orders(@r.params)
+        FielddayMws::ApiRequest.fetch_orders(@r.params)
       #}.to change(ApiRequest, :count).by(1)      
     end
     

@@ -12,9 +12,10 @@ require 'bundler'
 Bundler.setup
 Bundler.require(:default, ENV["RACK_ENV"].to_sym)
 
-require_relative '../models/api_requesd'
+require_relative '../models/api_request'
 require_relative '../models/order'
 require_relative '../models/order_item'
+require_relative '../models/client'
 
 # ACTIVE RECORD
 =begin

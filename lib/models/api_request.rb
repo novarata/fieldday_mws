@@ -28,7 +28,7 @@ module FielddayMws
 
     #has_many :child_requests, :class_name => "ApiRequest", :foreign_key => "api_request_id"
 
-    attr_accessor :mws_connection, :params, :store_id, :processing_status
+    attr_accessor :mws_connection, :params, :processing_status
   
     def init_mws_connection
       return self.mws_connection unless self.mws_connection.nil?
@@ -40,8 +40,6 @@ module FielddayMws
     end
 
     def self.fetch_order(p)
-      #r = ApiRequest.create!(request_type:LIST_ORDERS, store_id:p['store_id'])
-      #r = ApiRequest.new(request_type:LIST_ORDERS, store_id:p['store_id'])
       r = ApiRequest.new
       r.params = p
       r.fetch_order(p['amazon_order_id'])
@@ -55,15 +53,14 @@ module FielddayMws
       self.mark_complete        
     end
 
-    def self.vetch_orders(p)
-      #r = ApiRequest.create!(request_type:LIST_ORDERS, store_id:p['store_id'])
+    def self.fetch_orders(p)
       r = ApiRequest.new
       r.params = p
       r.fetch_orders(p['time_from'], p['time_to'])
     end
 
     def fetch_orders(time_from, time_to=nil)
-      raise AmazonError unless time_from.present?
+      raise ArgumentError unless time_from.present?
       self.init_mws_connection
       time_from = time_from.is_a?(String) ? DateTime.parse(time_from) : time_from    
       args = {  last_updated_after:   time_from.iso8601,
@@ -97,7 +94,7 @@ module FielddayMws
 
     def process_order(mws_order)
       items = self.fetch_items(mws_order.amazon_order_id)
-      order_hash = Order.build_hash(mws_order, items, self.store_id)
+      order_hash = Order.build_hash(mws_order, items)
       order_id = Order.post_create(order_hash, self.params['orders_uri'])
     end
 
@@ -121,7 +118,6 @@ module FielddayMws
     end
 
     def mark_complete
-      #self.update_attributes!(processing_status:COMPLETE_STATUS) 
       self.processing_status = COMPLETE_STATUS
     end
 

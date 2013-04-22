@@ -3,6 +3,7 @@
 module MwsHelpers
   include Amazon::MWS
 
+  TEST_ORDERS_URI = "http://www.testing.com/orders"
   ORDER_RESPONSE = {order:{id:1}}.to_json
   ORDER_ITEM_RESPONSE = {order_item:{id:1}}.to_json
 
@@ -120,12 +121,9 @@ module MwsHelpers
   end
 
   def stub_api_request
-    #r = ApiRequest.create!(request_type:ApiRequest::LIST_ORDERS, store_id:1)
     r = FielddayMws::ApiRequest.new
-    r.store_id = 1
     r.params = CONNECTION_PARAMS.merge({
-      'orders_uri' => 'http://localhost:3000/orders',
-      'store_id' => 1, 
+      'orders_uri' => TEST_ORDERS_URI,
       'time_from' => Time.now-1.hour
     })
   
@@ -166,6 +164,16 @@ module MwsHelpers
     Amazon::MWS::Base.any_instance.stub(:get_feed_submission_result).and_return(feed_result_response)
   end
 =end
+
+  # Stub response for a specific order (with no next page)
+  def stub_order_response
+    r = stub_mws_request
+    c = r.init_mws_connection
+    orders_response = stub_get_orders(c)
+    orders_response.stub(:next_token).and_return(nil) # Pretend there was no next token
+    return r
+  end
+
 
   def stub_orders_response(c)
     stub_list_orders(c)
