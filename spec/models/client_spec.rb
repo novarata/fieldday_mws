@@ -31,14 +31,15 @@ describe FielddayMws::Client do
 
     it "should fetch a specific order" do
       store = stub_order_response
+      
       p = CONNECTION_PARAMS.merge({ 'orders_uri' => TEST_ORDERS_URI })
       stub_request(:post, p['orders_uri']).with(body:{order:FIXTURE_ORDER1}.to_json).to_return(status:[200, "OK"], body:ORDER_RESPONSE)
-      response = FielddayMws::Client.fetch_order(p, 'blah')
+      response = FielddayMws::Client.fetch_order(p, FielddayMws::Client::STUBBED_ORDER_ID)
       WebMock.should have_requested(:post, p['orders_uri']).once
     end
 
     it "should fail with missing amazon credentials" do
-      expect { FielddayMws::Client.fetch_order({}, 'blah') }.to raise_error RestClient::BadRequest
+      expect { FielddayMws::Client.fetch_order({}, FielddayMws::Client::STUBBED_ORDER_ID) }.to raise_error RestClient::BadRequest
     end
     
     it "should fail with missing amazon order id" do

@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.authors     = ['A. Edward Wible']
   s.email       = ["aewible@gmail.com"]
 
-  s.files = Dir["lib/**/*"] + ["README.md"]
+  s.files = Dir["lib/**/*"] + Dir["spec/**/*"] + ["README.md"]
   s.test_files = Dir["spec/**/*"]
   s.require_paths = ["lib"]
 
@@ -19,4 +19,5 @@ Gem::Specification.new do |s|
   s.add_dependency "haml"
   #s.add_dependency "redis-store"
   s.add_dependency "rest-client"
+  s.add_dependency "webmock"
 end

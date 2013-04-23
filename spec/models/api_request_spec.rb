@@ -65,7 +65,6 @@ describe FielddayMws::ApiRequest do
 
     it "should process orders with next token" do
       mws_response = stub_list_orders(@c)      
-      mws_response.stub(:next_token).and_return('NEXT TOKEN')
       mws_response2 = stub_list_orders_next_token(@c)
       mws_response2.stub(:next_token).and_return(nil)
       @r.should_receive(:process_order).exactly(mws_response.orders.count + mws_response2.orders.count).times
@@ -101,13 +100,13 @@ describe FielddayMws::ApiRequest do
       mws_response = stub_list_order_items(@c)
       Amazon::MWS::Base.any_instance.should_receive(:list_order_items).once
       @r.should_receive(:process_items).once
-      @r.fetch_items('blah')
+      @r.fetch_items(FielddayMws::Client::STUBBED_ORDER_ID)
     end
 
     it "should process items with next token" do
       mws_response = stub_list_order_items(@c)      
       mws_response2 = stub_list_order_items_next_token(@c)
-      mws_response2.stub(:next_token).and_return(nil)
+      #mws_response2.stub(:next_token).and_return(nil)
       @r.should_receive(:process_item).exactly(mws_response.order_items.count + mws_response2.order_items.count).times
       @r.should_receive(:check_errors).twice
       @r.process_items(mws_response)

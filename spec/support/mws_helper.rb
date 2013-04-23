@@ -6,6 +6,11 @@ module MwsHelpers
   TEST_ORDERS_URI = "http://www.testing.com/orders"
   ORDER_RESPONSE = {order:{id:1}}.to_json
   ORDER_ITEM_RESPONSE = {order_item:{id:1}}.to_json
+  ORDER1_ID = "058-1233752-8214740"
+  ORDER2_ID = "134-5622222326-223434325"
+  ORDER1_NEXT_TOKEN = '2YgYW55IGNhcm5hbCBwbGVhc3VyZS4='
+  ORDER_ITEM1_NEXT_TOKEN = '2YgYW55IGNhcm99999999Vhc3VyZS4='
+  STUBBED_ORDER_ID = FielddayMws::Client::STUBBED_ORDER_ID
 
   FIXTURE_ITEM = {
     asin: "B034534547IMY", 
@@ -32,11 +37,11 @@ module MwsHelpers
     gift_wrap_level: nil, 
     gift_message_text: nil, 
     foreign_order_item_id: "4067343455435394", 
-    foreign_order_id: "058-1233752-8214740"
+    foreign_order_id: ORDER1_ID
   }
   FIXTURE_ITEM2 = FIXTURE_ITEM.merge({foreign_order_item_id:'406733453459999999'})
-  FIXTURE_ITEM3 = FIXTURE_ITEM.merge({foreign_order_item_id:'4067343455435394b', foreign_order_id:'134-5622222326-223434325'})
-  FIXTURE_ITEM4 = FIXTURE_ITEM.merge({foreign_order_item_id:'406733453459999999b', foreign_order_id:'134-5622222326-223434325' })
+  FIXTURE_ITEM3 = FIXTURE_ITEM.merge({foreign_order_item_id:'4067343455435394b', foreign_order_id:ORDER2_ID})
+  FIXTURE_ITEM4 = FIXTURE_ITEM.merge({foreign_order_item_id:'406733453459999999b', foreign_order_id:ORDER2_ID})
   
   FIXTURE_ORDER1 = {
     :purchase_date => "2010-10-05T00:06:07+00:00",
@@ -65,7 +70,7 @@ module MwsHelpers
     :buyer_name=>"Amazon User", 
     :buyer_email=>"5vlh04mgfmjh9h5@marketplace.amazon.com", 
     :shipment_service_level_category=>nil, 
-    :foreign_order_id=>"058-1233752-8214740",
+    :foreign_order_id=>ORDER1_ID,
     :order_items_attributes=>[FIXTURE_ITEM, FIXTURE_ITEM2]
   }
 
@@ -96,7 +101,7 @@ module MwsHelpers
     :buyer_name=>"John Smith", 
     :buyer_email=>"8v234234324234tyxv8@marketplace.amazon.com", 
     :shipment_service_level_category=>"Standard", 
-    :foreign_order_id=>"134-5622222326-223434325", 
+    :foreign_order_id=>ORDER2_ID, 
     :order_items_attributes=>[FIXTURE_ITEM3, FIXTURE_ITEM4]
   }
 
@@ -106,10 +111,6 @@ module MwsHelpers
     'merchant_id' => 'DUMMY',
     'marketplace_id' => 'ATVPDKIKX0DER',    
   }
-
-  def xml_for(name)
-    File.open(Pathname.new(File.dirname(__FILE__)).expand_path.dirname.join("fixtures/xml/#{name}.xml"),'rb').read
-  end
 
   def stub_api_request
     r = FielddayMws::ApiRequest.new
@@ -133,76 +134,28 @@ module MwsHelpers
     return r
   end
 
-=begin
-  def stub_products_response(c)
-    c.stub(:post).and_return(xml_for('submit_feed',200))
-    submit_feed_response = c.submit_feed(FielddayMws::ApiRequest::FEED_STEPS[0].to_sym, FielddayMws::ApiRequest::FEED_MSGS[0], [{}])
-    submit_feed_response.should be_a SubmitFeedResponse
-    Amazon::MWS::Base.any_instance.stub(:submit_feed).and_return(submit_feed_response)
-
-    c.stub(:get).and_return(xml_for('get_feed_submission_list',200))
-    feed_list_response = c.get_feed_submission_list({})
-    feed_list_response.should be_a GetFeedSubmissionListResponse
-    Amazon::MWS::Base.any_instance.stub(:get_feed_submission_list).and_return(feed_list_response)
-
-    c.stub(:get).and_return(xml_for('get_feed_submission_result',200))
-    feed_result_response = c.get_feed_submission_result('23423423432')
-    feed_result_response.should be_a GetFeedSubmissionResultResponse
-    Amazon::MWS::Base.any_instance.stub(:get_feed_submission_result).and_return(feed_result_response)
-  end
-=end
-
   # Stub response for a specific order (with no next page)
   def stub_order_response
     r = stub_mws_request
     c = r.init_mws_connection
     orders_response = stub_get_orders(c)
-    orders_response.stub(:next_token).and_return(nil) # Pretend there was no next token
+    #orders_response.stub(:next_token).and_return(nil) # Pretend there was no next token
     return r
   end
 
   def stub_orders_response(c)
-    stub_list_orders(c)
-    stub_list_orders_next_token(c)
-    stub_list_order_items(c)
-    stub_list_order_items_next_token(c)
-  end
-
-  MWS_GET_ORDER = /mws.amazonservices.com\/Orders\/.*Action=GetOrder/
-  MWS_LIST_ORDERS = /mws.amazonservices.com\/Orders\/.*Action=ListOrders/
-  MWS_LIST_ORDERS_NEXT_TOKEN = /mws.amazonservices.com\/Orders.*Action=ListOrdersByNextToken/
-  MWS_LIST_ORDER_ITEMS = /mws.amazonservices.com\/Orders\/.*Action=ListOrderItems.*AmazonOrderId=058-1233752-8214740/
-  MWS_LIST_ORDER_ITEMS_B = /mws.amazonservices.com\/Orders\/.*Action=ListOrderItems.*AmazonOrderId=134-5622222326-223434325/
-  MWS_LIST_ORDER_ITEMS_NEXT_TOKEN = /mws.amazonservices.com\/Orders\/.*Action=ListOrderItemsByNextToken.*NextToken=2YgYW55IGNhcm99999999Vhc3VyZS4=/
-  MWS_LIST_ORDER_ITEMS_NEXT_TOKEN_B = /mws.amazonservices.com\/Orders\/.*Action=ListOrderItemsByNextToken.*NextToken=2YgYW55IGNhcm99999999Vhc3VyZS4b=/
-
-  def xml_body(name)
-    File.open(Pathname.new(File.dirname(__FILE__)).expand_path.dirname.join("fixtures/xml/#{name}.xml"),'rb').read
-  end
-  
-  def stub_mws_xml(method, regexp, xml_file, code=200)
-    stub_request(method, regexp).to_return(:body => xml_body(xml_file), :status => code,  :headers => { 'Content-Type' => 'text/xml' } )
-  end
-
-  def stub_orders_responses
-    stub_mws_xml(:post, MWS_GET_ORDER, 'get_order')
-    stub_mws_xml(:post, MWS_LIST_ORDERS, 'list_orders')
-    stub_mws_xml(:post, MWS_LIST_ORDERS_NEXT_TOKEN, 'list_orders_by_next_token')
-    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS, 'list_order_items')
-    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_B, 'list_order_items_b') # Distinct order items for the second order
-    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_NEXT_TOKEN, 'list_order_items_by_next_token') # Distinct order items for second page of first order
-    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_NEXT_TOKEN_B, 'list_order_items_by_next_token_b') # Distinct order items for second page of second order
+    FielddayMws::Client.stub_all
   end
 
   def stub_get_orders(c)
-    stub_mws_xml(:post, MWS_GET_ORDER, 'get_order')
-    orders_response = c.get_orders({:amazon_order_id => ['058-1233752-8214740']})
+    FielddayMws::Client.stub_all
+    orders_response = c.get_orders({:amazon_order_id => [ORDER2_ID]})
     orders_response.should be_a RequestOrdersResponse
     return orders_response
   end
 
   def stub_list_orders(c)
-    stub_mws_xml(:post, MWS_LIST_ORDERS, 'list_orders')
+    FielddayMws::Client.stub_all
     
     orders_response = c.list_orders(
       :last_updated_after => Time.now.iso8601,
@@ -216,30 +169,28 @@ module MwsHelpers
   end
 
   def stub_list_orders_next_token(c)
-    stub_mws_xml(:post, MWS_LIST_ORDERS_NEXT_TOKEN, 'list_orders_by_next_token')
-    orders_response2 = c.list_orders_by_next_token(:next_token => '2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=')
+    FielddayMws::Client.stub_all
+    orders_response2 = c.list_orders_by_next_token(:next_token => ORDER1_NEXT_TOKEN)
     orders_response2.should be_a RequestOrdersByNextTokenResponse
     return orders_response2
   end
 
   def stub_list_order_items(c)
-    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS, 'list_order_items')
-    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_B, 'list_order_items_b')
-    items_response = c.list_order_items(:amazon_order_id => '058-1233752-8214740')
+    FielddayMws::Client.stub_all
+    items_response = c.list_order_items(:amazon_order_id => ORDER1_ID)
     items_response.should be_a RequestOrderItemsResponse
     return items_response
   end
 
   def stub_list_order_items_next_token(c)
-    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_NEXT_TOKEN, 'list_order_items_by_next_token')
-    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_NEXT_TOKEN_B, 'list_order_items_by_next_token_b')
-    items_response2 = c.list_order_items_by_next_token(:next_token => '2YgYW55IGNhcm99999999Vhc3VyZS4=')
+    FielddayMws::Client.stub_all
+    items_response2 = c.list_order_items_by_next_token(:next_token => ORDER_ITEM1_NEXT_TOKEN)
     items_response2.should be_a RequestOrderItemsByNextTokenResponse
     return items_response2  
   end
 
   def stub_list_orders_with_error(c)
-    stub_mws_xml(:post, MWS_LIST_ORDERS, 'error', 500)
+    FielddayMws::Client.stub_mws_xml(:post, FielddayMws::Client::MWS_LIST_ORDERS, 'error', 500)
     error_response = c.list_orders(
       :last_updated_after => Time.now.iso8601,
       :marketplace_id => ['ATVPDKIKX0DER']

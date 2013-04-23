@@ -17,6 +17,12 @@ require_relative '../models/order'
 require_relative '../models/order_item'
 require_relative '../models/client'
 
+if ENV["RACK_ENV"] == 'test'
+  require 'webmock'
+  include WebMock::API
+  FielddayMws::Client.stub_all
+end
+
 # ACTIVE RECORD
 =begin
 local_db_name = ENV["RACK_ENV"]=='test' ? 'fieldday_test' : 'fieldday_dev'
