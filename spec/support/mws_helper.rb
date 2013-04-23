@@ -35,6 +35,8 @@ module MwsHelpers
     foreign_order_id: "058-1233752-8214740"
   }
   FIXTURE_ITEM2 = FIXTURE_ITEM.merge({foreign_order_item_id:'406733453459999999'})
+  FIXTURE_ITEM3 = FIXTURE_ITEM.merge({foreign_order_item_id:'4067343455435394b', foreign_order_id:'134-5622222326-223434325'})
+  FIXTURE_ITEM4 = FIXTURE_ITEM.merge({foreign_order_item_id:'406733453459999999b', foreign_order_id:'134-5622222326-223434325' })
   
   FIXTURE_ORDER1 = {
     :purchase_date => "2010-10-05T00:06:07+00:00",
@@ -95,7 +97,7 @@ module MwsHelpers
     :buyer_email=>"8v234234324234tyxv8@marketplace.amazon.com", 
     :shipment_service_level_category=>"Standard", 
     :foreign_order_id=>"134-5622222326-223434325", 
-    :order_items_attributes=>[FIXTURE_ITEM, FIXTURE_ITEM2]
+    :order_items_attributes=>[FIXTURE_ITEM3, FIXTURE_ITEM4]
   }
 
   CONNECTION_PARAMS = {
@@ -105,24 +107,9 @@ module MwsHelpers
     'marketplace_id' => 'ATVPDKIKX0DER',    
   }
 
-  #def xml_for(name, code)
-  #  file = File.open(Pathname.new(File.dirname(__FILE__)).expand_path.dirname.join("fixtures/xml/#{name}.xml"),'rb')
-  #  mock_response(code, {:content_type=>'text/xml', :body=>file.read})
-  #end
-
   def xml_for(name)
     File.open(Pathname.new(File.dirname(__FILE__)).expand_path.dirname.join("fixtures/xml/#{name}.xml"),'rb').read
   end
-
-  #def mock_response(code, options={})
-  #  body = options[:body]
-  #  content_type = options[:content_type]
-  #  response = Net::HTTPResponse.send(:response_class, code.to_s).new("1.0", code.to_s, "message")
-  #  response.instance_variable_set(:@body, body)
-  #  response.instance_variable_set(:@read, true)
-  #  response.content_type = content_type
-  #  return response
-  #end
 
   def stub_api_request
     r = FielddayMws::ApiRequest.new
@@ -141,7 +128,6 @@ module MwsHelpers
 
   def stub_mws_request
     r = stub_api_request
-    #c = s.mws_connection
     stub_orders_response(r.mws_connection)
     #stub_products_response(r.mws_connection)
     return r
@@ -185,8 +171,10 @@ module MwsHelpers
   MWS_GET_ORDER = /mws.amazonservices.com\/Orders\/.*Action=GetOrder/
   MWS_LIST_ORDERS = /mws.amazonservices.com\/Orders\/.*Action=ListOrders/
   MWS_LIST_ORDERS_NEXT_TOKEN = /mws.amazonservices.com\/Orders.*Action=ListOrdersByNextToken/
-  MWS_LIST_ORDER_ITEMS = /mws.amazonservices.com\/Orders\/.*Action=ListOrderItems/
-  MWS_LIST_ORDER_ITEMS_NEXT_TOKEN = /mws.amazonservices.com\/Orders\/.*Action=ListOrderItemsByNextToken/
+  MWS_LIST_ORDER_ITEMS = /mws.amazonservices.com\/Orders\/.*Action=ListOrderItems.*AmazonOrderId=058-1233752-8214740/
+  MWS_LIST_ORDER_ITEMS_B = /mws.amazonservices.com\/Orders\/.*Action=ListOrderItems.*AmazonOrderId=134-5622222326-223434325/
+  MWS_LIST_ORDER_ITEMS_NEXT_TOKEN = /mws.amazonservices.com\/Orders\/.*Action=ListOrderItemsByNextToken.*NextToken=2YgYW55IGNhcm99999999Vhc3VyZS4=/
+  MWS_LIST_ORDER_ITEMS_NEXT_TOKEN_B = /mws.amazonservices.com\/Orders\/.*Action=ListOrderItemsByNextToken.*NextToken=2YgYW55IGNhcm99999999Vhc3VyZS4b=/
 
   def xml_body(name)
     File.open(Pathname.new(File.dirname(__FILE__)).expand_path.dirname.join("fixtures/xml/#{name}.xml"),'rb').read
@@ -196,13 +184,15 @@ module MwsHelpers
     stub_request(method, regexp).to_return(:body => xml_body(xml_file), :status => code,  :headers => { 'Content-Type' => 'text/xml' } )
   end
 
-  #def stub_orders_responses
-  #  stub_mws_xml(:post, MWS_GET_ORDER, 'get_order')
-  #  stub_mws_xml(:post, MWS_LIST_ORDERS, 'list_orders')
-  #  stub_mws_xml(:post, MWS_LIST_ORDERS_NEXT_TOKEN, 'list_orders_by_next_token')
-  #  stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS, 'list_order_items')
-  #  stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_NEXT_TOKEN, 'list_order_items_by_next_token')    
-  #end
+  def stub_orders_responses
+    stub_mws_xml(:post, MWS_GET_ORDER, 'get_order')
+    stub_mws_xml(:post, MWS_LIST_ORDERS, 'list_orders')
+    stub_mws_xml(:post, MWS_LIST_ORDERS_NEXT_TOKEN, 'list_orders_by_next_token')
+    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS, 'list_order_items')
+    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_B, 'list_order_items_b') # Distinct order items for the second order
+    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_NEXT_TOKEN, 'list_order_items_by_next_token') # Distinct order items for second page of first order
+    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_NEXT_TOKEN_B, 'list_order_items_by_next_token_b') # Distinct order items for second page of second order
+  end
 
   def stub_get_orders(c)
     stub_mws_xml(:post, MWS_GET_ORDER, 'get_order')
@@ -234,13 +224,15 @@ module MwsHelpers
 
   def stub_list_order_items(c)
     stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS, 'list_order_items')
-    items_response = c.list_order_items(:foreign_order_id => '134-562342326-223434325')
+    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_B, 'list_order_items_b')
+    items_response = c.list_order_items(:amazon_order_id => '058-1233752-8214740')
     items_response.should be_a RequestOrderItemsResponse
     return items_response
   end
 
   def stub_list_order_items_next_token(c)
-    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_NEXT_TOKEN, 'list_order_items_by_next_token')    
+    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_NEXT_TOKEN, 'list_order_items_by_next_token')
+    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_NEXT_TOKEN_B, 'list_order_items_by_next_token_b')
     items_response2 = c.list_order_items_by_next_token(:next_token => '2YgYW55IGNhcm99999999Vhc3VyZS4=')
     items_response2.should be_a RequestOrderItemsByNextTokenResponse
     return items_response2  
