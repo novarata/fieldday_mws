@@ -15,12 +15,11 @@ module FielddayMws
     set :show_exceptions, false if development?
   
     class << self
-      attr_accessor :base_uri
+      attr_accessor :base_uri, :item_sleep
 
       def post_callback(uri, payload)
         RestClient.post uri, payload, :content_type => :json, :accept => :json#, 'HTTP_AUTHORIZATION' => "Basic #{Base64.encode64("#{auth_token}:X")}"
-      end
-    
+      end    
     end
     
     get '/' do
@@ -31,7 +30,7 @@ module FielddayMws
     
     post '/v1/order_requests' do
       begin
-        params = JSON.parse(request.env["rack.input"].read)
+        params = JSON.parse(request.env["rack.input"].read) # TODO change to request.body hopefully
         p = order_requests_params(params)
         FielddayMws::ApiRequest.fetch_order(p)
         return 200

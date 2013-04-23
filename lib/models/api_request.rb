@@ -1,7 +1,6 @@
 module FielddayMws
-  class ApiRequest# < ActiveRecord::Base
-    ITEM_SLEEP_TIME = ENV["RACK_ENV"]=='test' ? 0 : 6
-    #ITEM_SLEEP_TIME = 6
+  class ApiRequest
+    ITEM_SLEEP_TIME = 6
     
     LIST_ORDERS = "ListOrders"
 
@@ -28,10 +27,11 @@ module FielddayMws
 
     #has_many :child_requests, :class_name => "ApiRequest", :foreign_key => "api_request_id"
 
-    attr_accessor :mws_connection, :params, :processing_status
+    attr_accessor :mws_connection, :params, :processing_status, :item_sleep_time
   
     def init_mws_connection
       return self.mws_connection unless self.mws_connection.nil?
+      self.item_sleep_time = ENV["RACK_ENV"]=='test' ? 0 : ITEM_SLEEP_TIME
       self.mws_connection = Amazon::MWS::Base.new(
         "access_key"        =>self.params['access_key'],
         "secret_access_key" =>self.params['secret_access_key'],
@@ -97,7 +97,7 @@ module FielddayMws
     end
 
     def fetch_items(amazon_order_id)
-      sleep ITEM_SLEEP_TIME
+      sleep self.item_sleep_time
       mws_response = self.mws_connection.list_order_items(amazon_order_id: amazon_order_id)
       self.process_items(mws_response)
     end

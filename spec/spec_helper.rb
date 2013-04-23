@@ -25,6 +25,8 @@ RSpec.configure do |config|
   # Any outbound requests should be stubbed separately (and not match localhost)
   config.before(:each) do
     FielddayMws::App.base_uri = "http://localhost"
+    FielddayMws::App.item_sleep = 0
+    
     stub_request(:any, /localhost/).to_rack(app)
   end
   
