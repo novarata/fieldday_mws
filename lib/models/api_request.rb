@@ -89,7 +89,7 @@ module FielddayMws
 
     def process_order(mws_order)
       items = self.fetch_items(mws_order.amazon_order_id)
-      order_hash = Order.build_hash(mws_order, items)
+      order_hash = Order.build_hash(mws_order, items, self.params['api_request_id'])
       order_id = Order.post_create(order_hash, self.params['orders_uri'])
     end
 

@@ -62,13 +62,13 @@ module FielddayMws
   
     def order_requests_params(params)
       required = %w(amazon_order_id access_key secret_access_key merchant_id marketplace_id orders_uri)
-      valid = required
+      valid = required + %w(api_request_id)
       valid_params(required, valid, params)
     end
   
     def orders_requests_params(params)
       required = %w(time_from access_key secret_access_key merchant_id marketplace_id orders_uri)
-      valid = required + %w(time_to)
+      valid = required + %w(time_to api_request_id)
       valid_params(required, valid, params)
     end
 

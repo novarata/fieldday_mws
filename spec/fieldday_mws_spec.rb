@@ -25,6 +25,7 @@ describe "App" do
       p = CONNECTION_PARAMS.merge({
         'orders_uri' => TEST_ORDERS_URI,
         'amazon_order_id' => STUBBED_ORDER_ID,
+        'api_request_id' => API_REQUEST_ID,
       })
 
       post '/v1/order_requests', p.to_json

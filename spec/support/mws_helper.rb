@@ -11,6 +11,7 @@ module MwsHelpers
   ORDER1_NEXT_TOKEN = '2YgYW55IGNhcm5hbCBwbGVhc3VyZS4='
   ORDER_ITEM1_NEXT_TOKEN = '2YgYW55IGNhcm99999999Vhc3VyZS4='
   STUBBED_ORDER_ID = FielddayMws::Client::STUBBED_ORDER_ID
+  API_REQUEST_ID = 1
 
   FIXTURE_ITEM = {
     asin: "B034534547IMY", 
@@ -71,7 +72,8 @@ module MwsHelpers
     :buyer_email=>"5vlh04mgfmjh9h5@marketplace.amazon.com", 
     :shipment_service_level_category=>nil, 
     :foreign_order_id=>ORDER1_ID,
-    :order_items_attributes=>[FIXTURE_ITEM, FIXTURE_ITEM2]
+    :order_items_attributes=>[FIXTURE_ITEM, FIXTURE_ITEM2],
+    :api_request_id=>API_REQUEST_ID,
   }
 
   FIXTURE_ORDER2 = {
@@ -102,7 +104,8 @@ module MwsHelpers
     :buyer_email=>"8v234234324234tyxv8@marketplace.amazon.com", 
     :shipment_service_level_category=>"Standard", 
     :foreign_order_id=>ORDER2_ID, 
-    :order_items_attributes=>[FIXTURE_ITEM3, FIXTURE_ITEM4]
+    :order_items_attributes=>[FIXTURE_ITEM3, FIXTURE_ITEM4],
+    :api_request_id=>API_REQUEST_ID,
   }
 
   CONNECTION_PARAMS = {
@@ -116,7 +119,8 @@ module MwsHelpers
     r = FielddayMws::ApiRequest.new
     r.params = CONNECTION_PARAMS.merge({
       'orders_uri' => TEST_ORDERS_URI,
-      'time_from' => Time.now-1.hour
+      'time_from' => Time.now-1.hour,
+      'api_request_id' => API_REQUEST_ID,
     })
   
     c = r.init_mws_connection

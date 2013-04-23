@@ -103,7 +103,6 @@ describe FielddayMws::ApiRequest do
     it "should process items with next token" do
       mws_response = stub_list_order_items(@c)      
       mws_response2 = stub_list_order_items_next_token(@c)
-      #mws_response2.stub(:next_token).and_return(nil)
       @r.should_receive(:process_item).exactly(mws_response.order_items.count + mws_response2.order_items.count).times
       @r.should_receive(:check_errors).twice
       @r.process_items(mws_response)
