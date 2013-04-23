@@ -13,7 +13,7 @@ describe FielddayMws::Order do
   end
 
   it "should build a hash" do
-    
+    pending
   end
   
 end

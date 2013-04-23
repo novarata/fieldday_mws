@@ -10,7 +10,6 @@ module FielddayMws
     FULFILLMENT_STATUSES = ["Unshipped", "PartiallyShipped", "Shipped", "Unfulfillable"]
 
     ORDER_RESULTS_PER_PAGE = 100
-    COMPLETE_STATUS = 'Complete'
 
     #FULLY_COMPLETED = 'fully_completed'
     #STATUS_DONE = '_DONE_'
@@ -27,7 +26,7 @@ module FielddayMws
 
     #has_many :child_requests, :class_name => "ApiRequest", :foreign_key => "api_request_id"
 
-    attr_accessor :mws_connection, :params, :processing_status, :item_sleep_time
+    attr_accessor :mws_connection, :params, :item_sleep_time
   
     def init_mws_connection
       return self.mws_connection unless self.mws_connection.nil?
@@ -49,7 +48,6 @@ module FielddayMws
       self.init_mws_connection
       mws_response = self.mws_connection.get_orders(amazon_order_id: [amazon_order_id])
       self.process_orders(mws_response)
-      self.mark_complete        
     end
 
     def self.fetch_orders(p)
@@ -74,7 +72,6 @@ module FielddayMws
       end
       mws_response = self.mws_connection.list_orders(args)
       self.process_orders(mws_response)
-      self.mark_complete
     end
 
     def check_errors(mws_response)
@@ -113,10 +110,6 @@ module FielddayMws
 
     def process_item(mws_item, amazon_order_id)
       OrderItem.build_hash(mws_item, amazon_order_id)
-    end
-
-    def mark_complete
-      self.processing_status = COMPLETE_STATUS
     end
 
   end

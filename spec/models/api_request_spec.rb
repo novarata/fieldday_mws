@@ -18,9 +18,8 @@ describe FielddayMws::ApiRequest do
     it "should fetch order" do
       @c.should_receive(:get_orders).once
       @r.should_receive(:process_orders).once
-      @r.fetch_order('BLAH')
-      @r.processing_status.should eq FielddayMws::ApiRequest::COMPLETE_STATUS
-    end    
+      @r.fetch_order(FielddayMws::Client::STUBBED_ORDER_ID)
+    end
 
   end
 
@@ -35,14 +34,12 @@ describe FielddayMws::ApiRequest do
       @c.should_receive(:list_orders).once
       @r.should_receive(:process_orders).once
       @r.fetch_orders(Time.now - 1.week, Time.now)
-      @r.processing_status.should eq FielddayMws::ApiRequest::COMPLETE_STATUS
     end
 
     it "should fetch orders with only a from date" do
       @c.should_receive(:list_orders).once
       @r.should_receive(:process_orders).once
       @r.fetch_orders(Time.now - 1.week)
-      @r.processing_status.should eq FielddayMws::ApiRequest::COMPLETE_STATUS
     end
 
     it "should raise an exception if no dates are given" do
@@ -133,11 +130,6 @@ describe FielddayMws::ApiRequest do
   it "should init mws connection" do
     r = stub_api_request
     r.mws_connection.should be_a Amazon::MWS::Base
-  end
-  
-  it "should mark complete" do
-    @r.mark_complete
-    @r.processing_status.should eq FielddayMws::ApiRequest::COMPLETE_STATUS    
   end
 
 end
