@@ -105,20 +105,24 @@ module MwsHelpers
     'marketplace_id' => 'ATVPDKIKX0DER',    
   }
 
-  def xml_for(name, code)
-    file = File.open(Pathname.new(File.dirname(__FILE__)).expand_path.dirname.join("fixtures/xml/#{name}.xml"),'rb')
-    mock_response(code, {:content_type=>'text/xml', :body=>file.read})
+  #def xml_for(name, code)
+  #  file = File.open(Pathname.new(File.dirname(__FILE__)).expand_path.dirname.join("fixtures/xml/#{name}.xml"),'rb')
+  #  mock_response(code, {:content_type=>'text/xml', :body=>file.read})
+  #end
+
+  def xml_for(name)
+    File.open(Pathname.new(File.dirname(__FILE__)).expand_path.dirname.join("fixtures/xml/#{name}.xml"),'rb').read
   end
 
-  def mock_response(code, options={})
-    body = options[:body]
-    content_type = options[:content_type]
-    response = Net::HTTPResponse.send(:response_class, code.to_s).new("1.0", code.to_s, "message")
-    response.instance_variable_set(:@body, body)
-    response.instance_variable_set(:@read, true)
-    response.content_type = content_type
-    return response
-  end
+  #def mock_response(code, options={})
+  #  body = options[:body]
+  #  content_type = options[:content_type]
+  #  response = Net::HTTPResponse.send(:response_class, code.to_s).new("1.0", code.to_s, "message")
+  #  response.instance_variable_set(:@body, body)
+  #  response.instance_variable_set(:@read, true)
+  #  response.content_type = content_type
+  #  return response
+  #end
 
   def stub_api_request
     r = FielddayMws::ApiRequest.new
@@ -128,9 +132,6 @@ module MwsHelpers
     })
   
     c = r.init_mws_connection
-    c.stub(:post).and_return(xml_for('submit_feed',200))
-    c.stub(:get).and_return(xml_for('get_feed_submission_list',200))
-    c.stub(:get_feed_submission_result).and_return(GetFeedSubmissionResultResponse.format(xml_for('get_feed_submission_result',200)))    
     return r
   end
 
@@ -174,7 +175,6 @@ module MwsHelpers
     return r
   end
 
-
   def stub_orders_response(c)
     stub_list_orders(c)
     stub_list_orders_next_token(c)
@@ -182,16 +182,38 @@ module MwsHelpers
     stub_list_order_items_next_token(c)
   end
 
+  MWS_GET_ORDER = /mws.amazonservices.com\/Orders\/.*Action=GetOrder/
+  MWS_LIST_ORDERS = /mws.amazonservices.com\/Orders\/.*Action=ListOrders/
+  MWS_LIST_ORDERS_NEXT_TOKEN = /mws.amazonservices.com\/Orders.*Action=ListOrdersByNextToken/
+  MWS_LIST_ORDER_ITEMS = /mws.amazonservices.com\/Orders\/.*Action=ListOrderItems/
+  MWS_LIST_ORDER_ITEMS_NEXT_TOKEN = /mws.amazonservices.com\/Orders\/.*Action=ListOrderItemsByNextToken/
+
+  def xml_body(name)
+    File.open(Pathname.new(File.dirname(__FILE__)).expand_path.dirname.join("fixtures/xml/#{name}.xml"),'rb').read
+  end
+  
+  def stub_mws_xml(method, regexp, xml_file, code=200)
+    stub_request(method, regexp).to_return(:body => xml_body(xml_file), :status => code,  :headers => { 'Content-Type' => 'text/xml' } )
+  end
+
+  #def stub_orders_responses
+  #  stub_mws_xml(:post, MWS_GET_ORDER, 'get_order')
+  #  stub_mws_xml(:post, MWS_LIST_ORDERS, 'list_orders')
+  #  stub_mws_xml(:post, MWS_LIST_ORDERS_NEXT_TOKEN, 'list_orders_by_next_token')
+  #  stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS, 'list_order_items')
+  #  stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_NEXT_TOKEN, 'list_order_items_by_next_token')    
+  #end
+
   def stub_get_orders(c)
-    c.stub(:post).and_return(xml_for('list_orders',200))
+    stub_mws_xml(:post, MWS_GET_ORDER, 'get_order')
     orders_response = c.get_orders({:amazon_order_id => ['058-1233752-8214740']})
     orders_response.should be_a RequestOrdersResponse
-    Amazon::MWS::Base.any_instance.stub(:get_orders).and_return(orders_response)
     return orders_response
   end
 
   def stub_list_orders(c)
-    c.stub(:post).and_return(xml_for('list_orders',200))
+    stub_mws_xml(:post, MWS_LIST_ORDERS, 'list_orders')
+    
     orders_response = c.list_orders(
       :last_updated_after => Time.now.iso8601,
       :results_per_page => 100,
@@ -200,36 +222,32 @@ module MwsHelpers
       :marketplace_id => ['ATVPDKIKX0DER']
     )
     orders_response.should be_a RequestOrdersResponse
-    Amazon::MWS::Base.any_instance.stub(:list_orders).and_return(orders_response)
     return orders_response
   end
 
   def stub_list_orders_next_token(c)
-    c.stub(:post).and_return(xml_for('list_orders_by_next_token',200))
+    stub_mws_xml(:post, MWS_LIST_ORDERS_NEXT_TOKEN, 'list_orders_by_next_token')
     orders_response2 = c.list_orders_by_next_token(:next_token => '2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=')
     orders_response2.should be_a RequestOrdersByNextTokenResponse
-    Amazon::MWS::Base.any_instance.stub(:list_orders_by_next_token).and_return(orders_response2)
     return orders_response2
   end
 
   def stub_list_order_items(c)
-    c.stub(:post).and_return(xml_for('list_order_items',200))
+    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS, 'list_order_items')
     items_response = c.list_order_items(:foreign_order_id => '134-562342326-223434325')
     items_response.should be_a RequestOrderItemsResponse
-    Amazon::MWS::Base.any_instance.stub(:list_order_items).and_return(items_response)
     return items_response
   end
 
   def stub_list_order_items_next_token(c)
-    c.stub(:post).and_return(xml_for('list_order_items_by_next_token',200))
+    stub_mws_xml(:post, MWS_LIST_ORDER_ITEMS_NEXT_TOKEN, 'list_order_items_by_next_token')    
     items_response2 = c.list_order_items_by_next_token(:next_token => '2YgYW55IGNhcm99999999Vhc3VyZS4=')
     items_response2.should be_a RequestOrderItemsByNextTokenResponse
-    Amazon::MWS::Base.any_instance.stub(:list_order_items_by_next_token).and_return(items_response2)
     return items_response2  
   end
 
   def stub_list_orders_with_error(c)
-    c.stub(:post).and_return(xml_for('error',500))
+    stub_mws_xml(:post, MWS_LIST_ORDERS, 'error', 500)
     error_response = c.list_orders(
       :last_updated_after => Time.now.iso8601,
       :marketplace_id => ['ATVPDKIKX0DER']

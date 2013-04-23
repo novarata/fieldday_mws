@@ -12,9 +12,7 @@ describe FielddayMws::ApiRequest do
 
     it "should fetch order from params" do
       FielddayMws::ApiRequest.any_instance.should_receive(:fetch_order).once      
-      #expect {
-        FielddayMws::ApiRequest.fetch_order(@r.params)
-      #}.to change(ApiRequest, :count).by(1)
+      FielddayMws::ApiRequest.fetch_order(@r.params)
     end
 
     it "should fetch order" do
@@ -30,9 +28,7 @@ describe FielddayMws::ApiRequest do
     
     it "should fetch orders from params" do
       FielddayMws::ApiRequest.any_instance.should_receive(:fetch_orders).once      
-      #expect {
-        FielddayMws::ApiRequest.fetch_orders(@r.params)
-      #}.to change(ApiRequest, :count).by(1)      
+      FielddayMws::ApiRequest.fetch_orders(@r.params)
     end
     
     it "should fetch orders with from date and to date" do
@@ -56,28 +52,12 @@ describe FielddayMws::ApiRequest do
   end
     
 
-  describe "check errors" do
-    context "no errors" do
-
-      it "should return the orders response it was passed" do
-        mws_response = stub_list_orders(@c)
-        @r.check_errors(mws_response).should be mws_response
-      end
-
-      it "should return the order_items response it was passed" do
-        mws_response = stub_list_order_items(@c)
-        @r.check_errors(mws_response).should be mws_response
-      end
-      
-    end
-    
-    context "with errors" do
-      it "should raise an exception" do
-        mws_response = stub_list_orders_with_error(@c)
-        expect {
-          @r.check_errors(mws_response)
-        }.to raise_exception(FielddayMws::AmazonError)
-      end
+  describe "check errors" do    
+    it "should raise an exception when there is an error" do
+      mws_response = stub_list_orders_with_error(@c)
+      expect {
+        @r.check_errors(mws_response)
+      }.to raise_exception(FielddayMws::AmazonError)
     end
   end
     
@@ -131,7 +111,6 @@ describe FielddayMws::ApiRequest do
       mws_response2.stub(:next_token).and_return(nil)
       @r.should_receive(:process_item).exactly(mws_response.order_items.count + mws_response2.order_items.count).times
       @r.should_receive(:check_errors).twice
-      #@r.mws_connection.should_receive(:list_order_items_by_next_token).once
       @r.process_items(mws_response)
     end
   

@@ -26,7 +26,7 @@ describe "App" do
         'orders_uri' => TEST_ORDERS_URI,
         'amazon_order_id' => 'TESTING',
       })
-    
+
       post '/v1/order_requests', p.to_json
       WebMock.should have_requested(:post, r.params['orders_uri']).once
     end

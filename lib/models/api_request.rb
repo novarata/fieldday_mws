@@ -47,8 +47,7 @@ module FielddayMws
 
     def fetch_order(amazon_order_id)
       self.init_mws_connection
-      args = {  amazon_order_id: [amazon_order_id] }
-      mws_response = self.mws_connection.get_orders(args)
+      mws_response = self.mws_connection.get_orders(amazon_order_id: [amazon_order_id])
       self.process_orders(mws_response)
       self.mark_complete        
     end
@@ -80,7 +79,6 @@ module FielddayMws
 
     def check_errors(mws_response)
       raise AmazonError, "#{mws_response.code}: #{mws_response.message}" if mws_response.accessors.include?("code")
-      mws_response
     end
 
     # Recursive function to process all orders

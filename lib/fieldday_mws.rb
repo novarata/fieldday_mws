@@ -28,7 +28,7 @@ module FielddayMws
       @client_ip = request.ip
       haml :index, :format => :html5
     end
-
+    
     post '/v1/order_requests' do
       begin
         params = JSON.parse(request.env["rack.input"].read)
