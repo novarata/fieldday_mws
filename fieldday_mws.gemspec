@@ -20,6 +20,7 @@ Gem::Specification.new do |s|
   s.add_dependency "redis-store"
   s.add_dependency "sidekiq"
   s.add_dependency "sidekiq-throttler"
+  s.add_dependency "rabl"
   s.add_dependency "rest-client"
   s.add_dependency "webmock"
 end

@@ -7,6 +7,13 @@ require 'oj'
 require 'redis'
 require 'sidekiq'
 
+# Register RABL
+require 'rabl'
+require 'active_support/core_ext'
+require 'active_support/inflector'
+require 'builder'
+Rabl.register!
+
 # ENVIRONMENT
 ENV["RACK_ENV"] ||= "development"
 require 'bundler'
