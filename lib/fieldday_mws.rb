@@ -30,9 +30,10 @@ module FielddayMws
     
     post '/v1/order_requests' do
       begin
-        params = JSON.parse(request.env["rack.input"].read) # TODO change to request.body hopefully
+        params = JSON.parse(request.body.read)#env["rack.input"].read) # TODO change to request.body hopefully
         p = order_requests_params(params)
-        FielddayMws::ApiRequest.fetch_order(p)
+        FielddayMws::FetchOrderWorker.perform_async(p)
+        #FielddayMws::ApiRequest.fetch_order(p)
         return 200
       rescue ArgumentError, JSON::ParserError => e
         logger.fatal $!
@@ -42,9 +43,10 @@ module FielddayMws
 
     post '/v1/orders_requests' do
       begin
-        params = JSON.parse(request.env["rack.input"].read)
+        params = JSON.parse(request.body.read)#env["rack.input"].read)
         p = orders_requests_params(params)
-        FielddayMws::ApiRequest.fetch_orders(p)
+        #FielddayMws::ApiRequest.fetch_orders(p)
+        FielddayMws::FetchOrdersWorker.perform_async(p)
         return 200
       rescue ArgumentError, JSON::ParserError => e
         logger.fatal $!
@@ -61,13 +63,13 @@ module FielddayMws
     end
   
     def order_requests_params(params)
-      required = %w(amazon_order_id access_key secret_access_key merchant_id marketplace_id orders_uri)
+      required = %w(access_key secret_access_key merchant_id marketplace_id orders_uri amazon_order_id)
       valid = required + %w(api_request_id)
       valid_params(required, valid, params)
     end
   
     def orders_requests_params(params)
-      required = %w(time_from access_key secret_access_key merchant_id marketplace_id orders_uri)
+      required = %w(access_key secret_access_key merchant_id marketplace_id orders_uri time_from)
       valid = required + %w(time_to api_request_id)
       valid_params(required, valid, params)
     end

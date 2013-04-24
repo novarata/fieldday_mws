@@ -11,15 +11,15 @@ module FielddayMws
 
     # Send a POST HTTP request to create an order
     def self.post_create(order_hash, orders_uri)
+      # TODO include retry logic or put through Sidekiq worker with retry
       response = FielddayMws::App.post_callback(orders_uri, {order:order_hash}.to_json)
       JSON.parse(response.body)["order"]["id"]
     end
 
     # Take an amazon format order object and some additional information and construct a hash suitable for POSTing
-    def self.build_hash(mws_order, items, api_request_id=nil)
+    def self.build_hash(mws_order, api_request_id=nil)
       mws_order.as_hash.select{|k,v| PERMITTED_FIELDS.include?(k)}.merge({
         foreign_order_id: mws_order.amazon_order_id,
-        order_items_attributes: items,
         api_request_id: api_request_id,
       })
     end

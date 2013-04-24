@@ -6,13 +6,12 @@ SimpleCov.start do
   add_group "Models", "./lib/models"
 end
 
+ENV['RACK_ENV'] = 'test'
 require 'rspec'
 require 'rack/test'
 require 'webmock/rspec'
-
-ENV['RACK_ENV'] = 'test'
-
 require './lib/fieldday_mws.rb'
+require 'sidekiq/testing/inline' # Note this needs to come after boot is loaded as sidekiq is initialized in boot.rb
 
 Dir["./spec/support/**/*.rb"].each {|f| require f}
 

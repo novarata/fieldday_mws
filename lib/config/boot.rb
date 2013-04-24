@@ -1,10 +1,11 @@
 require 'sinatra/base'
 require 'sinatra/json'
 require 'haml'
-#require 'active_record'
+require 'active_record'
 require 'json'
 require 'oj'
-#require 'redis'
+require 'redis'
+require 'sidekiq'
 
 # ENVIRONMENT
 ENV["RACK_ENV"] ||= "development"
@@ -16,6 +17,9 @@ require_relative '../models/api_request'
 require_relative '../models/order'
 require_relative '../models/order_item'
 require_relative '../models/client'
+require_relative '../workers/fetch_order_worker.rb'
+require_relative '../workers/fetch_orders_worker.rb'
+require_relative '../workers/process_order_worker.rb'
 
 if ENV["RACK_ENV"] == 'test'
   require 'webmock'
@@ -24,9 +28,9 @@ if ENV["RACK_ENV"] == 'test'
 end
 
 # ACTIVE RECORD
-=begin
 local_db_name = ENV["RACK_ENV"]=='test' ? 'fieldday_test' : 'fieldday_dev'
 db = URI.parse(ENV['DATABASE_URL'] || "postgres://localhost/#{local_db_name}")
+ENV['DATABASE_URL'] = "#{database_url}?pool=20" if ENV['DATABASE_URL']
 ActiveRecord::Base.establish_connection(
   :adapter  => db.scheme == 'postgres' ? 'postgresql' : db.scheme,
   :host     => db.host,
@@ -36,15 +40,30 @@ ActiveRecord::Base.establish_connection(
   :database => db.path[1..-1],
   :encoding => 'utf8'
 )
-=end
 
 # REDIS
-#if ['production','staging'].include? ENV['RACK_ENV']
-#  uri = URI.parse(ENV["REDISTOGO_URL"])
-#  REDIS = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
-#elsif ENV['RACK_ENV'] == 'development'
-#  REDIS = Redis.new
-#else
-#  require 'fakeredis'
-#  REDIS = Redis.new
-#end
+if ['production','staging'].include? ENV['RACK_ENV']
+  uri = URI.parse(ENV["REDISTOGO_URL"])
+  REDIS = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
+elsif ENV['RACK_ENV'] == 'development'
+  REDIS = Redis.new
+else
+  require 'fakeredis'
+  REDIS = Redis.new
+end
+
+# Sidekiq
+if ['production','staging'].include? ENV['RACK_ENV']
+  Sidekiq.configure_server do |config|
+    config.redis = { :url => ENV["REDISTOGO_URL"], namespace:'fieldday_mws_workers', size:2 }
+
+    config.server_middleware do |chain|
+      chain.add Sidekiq::Throttler
+    end
+  end
+
+  # When in Unicorn, this block needs to go in unicorn's `after_fork` callback:
+  Sidekiq.configure_client do |config|
+    config.redis = { :url => ENV["REDISTOGO_URL"], namespace:'fieldday_mws_workers', size:1 }
+  end
+end

@@ -72,8 +72,8 @@ module MwsHelpers
     :buyer_email=>"5vlh04mgfmjh9h5@marketplace.amazon.com", 
     :shipment_service_level_category=>nil, 
     :foreign_order_id=>ORDER1_ID,
-    :order_items_attributes=>[FIXTURE_ITEM, FIXTURE_ITEM2],
     :api_request_id=>API_REQUEST_ID,
+    :order_items_attributes=>[FIXTURE_ITEM, FIXTURE_ITEM2],
   }
 
   FIXTURE_ORDER2 = {
@@ -104,8 +104,8 @@ module MwsHelpers
     :buyer_email=>"8v234234324234tyxv8@marketplace.amazon.com", 
     :shipment_service_level_category=>"Standard", 
     :foreign_order_id=>ORDER2_ID, 
-    :order_items_attributes=>[FIXTURE_ITEM3, FIXTURE_ITEM4],
     :api_request_id=>API_REQUEST_ID,
+    :order_items_attributes=>[FIXTURE_ITEM3, FIXTURE_ITEM4],
   }
 
   CONNECTION_PARAMS = {

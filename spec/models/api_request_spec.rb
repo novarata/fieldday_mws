@@ -64,18 +64,16 @@ describe FielddayMws::ApiRequest do
       mws_response = stub_list_orders(@c)      
       mws_response2 = stub_list_orders_next_token(@c)
       mws_response2.stub(:next_token).and_return(nil)
-      @r.should_receive(:process_order).exactly(mws_response.orders.count + mws_response2.orders.count).times
-      @r.should_receive(:check_errors).twice # we are making a subsequent request, so we have to check
+      FielddayMws::ApiRequest.should_receive(:process_order).exactly(mws_response.orders.count + mws_response2.orders.count).times
       @r.process_orders(mws_response)
     end
     
     it "should process orders without next token" do
       mws_response = stub_list_orders(@c)
       mws_response.stub(:next_token).and_return(nil)
-      @r.stub(:process_order).and_return({})
-      @r.should_receive(:process_order).exactly(mws_response.orders.count).times
+      FielddayMws::ApiRequest.stub(:process_order).and_return({})
+      FielddayMws::ApiRequest.should_receive(:process_order).exactly(mws_response.orders.count).times
       @r.mws_connection.should_not_receive(:list_orders_by_next_token)
-      @r.should_receive(:check_errors).once
       @r.process_orders(mws_response)
     end
 
@@ -85,7 +83,7 @@ describe FielddayMws::ApiRequest do
       mws_order = stub_list_orders(@c).orders.first
       FielddayMws::ApiRequest.any_instance.stub(:fetch_items).and_return([FIXTURE_ITEM, FIXTURE_ITEM2])
       stub_request(:post, @r.params['orders_uri']).with(body:{order:FIXTURE_ORDER1}.to_json).to_return(status:[200, "OK"], body:ORDER_RESPONSE)
-      @r.process_order(mws_order)
+      @r.process_order(FielddayMws::Order.build_hash(mws_order, API_REQUEST_ID))
       WebMock.should have_requested(:post, @r.params['orders_uri']).once
     end
 
