@@ -1,18 +1,18 @@
 require 'spec_helper'
 include MwsHelpers
 
-describe FielddayMws::ApiRequest do
+describe FielddayMws::OrdersRequest do
 
   before :each do
-    @r = stub_api_request
+    @r = stub_orders_request
     @c = @r.mws_connection
   end
 
   describe "fetching a specified order" do
 
     it "should fetch order from params" do
-      FielddayMws::ApiRequest.any_instance.should_receive(:fetch_order).once      
-      FielddayMws::ApiRequest.fetch_order(@r.params)
+      FielddayMws::OrdersRequest.any_instance.should_receive(:fetch_order).once      
+      FielddayMws::OrdersRequest.fetch_order(@r.params)
     end
 
     it "should fetch order" do
@@ -26,8 +26,8 @@ describe FielddayMws::ApiRequest do
   describe "fetching orders" do
     
     it "should fetch orders from params" do
-      FielddayMws::ApiRequest.any_instance.should_receive(:fetch_orders).once      
-      FielddayMws::ApiRequest.fetch_orders(@r.params)
+      FielddayMws::OrdersRequest.any_instance.should_receive(:fetch_orders).once      
+      FielddayMws::OrdersRequest.fetch_orders(@r.params)
     end
     
     it "should fetch orders with from date and to date" do
@@ -64,15 +64,15 @@ describe FielddayMws::ApiRequest do
       mws_response = stub_list_orders(@c)      
       mws_response2 = stub_list_orders_next_token(@c)
       mws_response2.stub(:next_token).and_return(nil)
-      FielddayMws::ApiRequest.should_receive(:process_order).exactly(mws_response.orders.count + mws_response2.orders.count).times
+      FielddayMws::OrdersRequest.should_receive(:process_order).exactly(mws_response.orders.count + mws_response2.orders.count).times
       @r.process_orders(mws_response)
     end
     
     it "should process orders without next token" do
       mws_response = stub_list_orders(@c)
       mws_response.stub(:next_token).and_return(nil)
-      FielddayMws::ApiRequest.stub(:process_order).and_return({})
-      FielddayMws::ApiRequest.should_receive(:process_order).exactly(mws_response.orders.count).times
+      FielddayMws::OrdersRequest.stub(:process_order).and_return({})
+      FielddayMws::OrdersRequest.should_receive(:process_order).exactly(mws_response.orders.count).times
       @r.mws_connection.should_not_receive(:list_orders_by_next_token)
       @r.process_orders(mws_response)
     end
@@ -81,7 +81,7 @@ describe FielddayMws::ApiRequest do
     # test that this method results in an HTTP request to the orders_uri callback
     it "should process order" do
       mws_order = stub_list_orders(@c).orders.first
-      FielddayMws::ApiRequest.any_instance.stub(:fetch_items).and_return([FIXTURE_ITEM, FIXTURE_ITEM2])
+      FielddayMws::OrdersRequest.any_instance.stub(:fetch_items).and_return([FIXTURE_ITEM, FIXTURE_ITEM2])
       stub_request(:post, @r.params['orders_uri']).with(body:{order:FIXTURE_ORDER1}.to_json).to_return(status:[200, "OK"], body:ORDER_RESPONSE)
       @r.process_order(FielddayMws::Order.build_hash(mws_order, API_REQUEST_ID))
       WebMock.should have_requested(:post, @r.params['orders_uri']).once
@@ -125,7 +125,7 @@ describe FielddayMws::ApiRequest do
   end
   
   it "should init mws connection" do
-    r = stub_api_request
+    r = stub_orders_request
     r.mws_connection.should be_a Amazon::MWS::Base
   end
 

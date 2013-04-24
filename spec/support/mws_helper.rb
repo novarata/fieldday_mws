@@ -115,8 +115,8 @@ module MwsHelpers
     'marketplace_id' => 'ATVPDKIKX0DER',    
   }
 
-  def stub_api_request
-    r = FielddayMws::ApiRequest.new
+  def stub_orders_request
+    r = FielddayMws::OrdersRequest.new
     r.params = CONNECTION_PARAMS.merge({
       'orders_uri' => TEST_ORDERS_URI,
       'time_from' => Time.now-1.hour,
@@ -128,11 +128,11 @@ module MwsHelpers
   end
 
   def stub_mws_connection
-    stub_api_request.mws_connection 
+    stub_orders_request.mws_connection 
   end
 
   def stub_mws_request
-    r = stub_api_request
+    r = stub_orders_request
     stub_orders_response(r.mws_connection)
     #stub_products_response(r.mws_connection)
     return r
@@ -164,7 +164,7 @@ module MwsHelpers
     orders_response = c.list_orders(
       :last_updated_after => Time.now.iso8601,
       :results_per_page => 100,
-      :fulfillment_channel => FielddayMws::ApiRequest::FULFILLMENT_CHANNELS,
+      :fulfillment_channel => FielddayMws::OrdersRequest::FULFILLMENT_CHANNELS,
       :order_status => ["Unshipped", "PartiallyShipped", "Shipped", "Unfulfillable"],
       :marketplace_id => ['ATVPDKIKX0DER']
     )

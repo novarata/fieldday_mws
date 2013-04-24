@@ -1,5 +1,5 @@
 module FielddayMws
-  class ApiRequest
+  class OrdersRequest
     ITEM_SLEEP_TIME = 6
 
     FBA_CHANNEL = 'AFN'
@@ -22,7 +22,7 @@ module FielddayMws
     end
 
     def self.fetch_order(p)
-      r = ApiRequest.new
+      r = OrdersRequest.new
       r.params = p
       r.fetch_order(p['amazon_order_id'])
     end
@@ -34,7 +34,7 @@ module FielddayMws
     end
 
     def self.fetch_orders(p)
-      r = ApiRequest.new
+      r = OrdersRequest.new
       r.params = p
       r.fetch_orders(p['time_from'], p['time_to'])
     end
@@ -76,7 +76,7 @@ module FielddayMws
     end
 
     def self.process_order(order_hash, p)
-      r = ApiRequest.new
+      r = OrdersRequest.new
       r.params = p
       r.process_order(order_hash)
     end

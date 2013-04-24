@@ -20,7 +20,7 @@ require 'bundler'
 Bundler.setup
 Bundler.require(:default, ENV["RACK_ENV"].to_sym)
 
-require_relative '../models/api_request'
+require_relative '../models/orders_request'
 require_relative '../models/order'
 require_relative '../models/order_item'
 require_relative '../models/client'
@@ -51,12 +51,12 @@ ActiveRecord::Base.establish_connection(
 # REDIS
 if ['production','staging'].include? ENV['RACK_ENV']
   uri = URI.parse(ENV["REDISTOGO_URL"])
-  REDIS = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
+  REDIS ||= Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
 elsif ENV['RACK_ENV'] == 'development'
-  REDIS = Redis.new
+  REDIS ||= Redis.new
 else
   require 'fakeredis'
-  REDIS = Redis.new
+  REDIS ||= Redis.new
 end
 
 # Sidekiq

@@ -33,7 +33,7 @@ module FielddayMws
         params = JSON.parse(request.body.read)#env["rack.input"].read) # TODO change to request.body hopefully
         p = order_requests_params(params)
         FielddayMws::FetchOrderWorker.perform_async(p)
-        #FielddayMws::ApiRequest.fetch_order(p)
+        #FielddayMws::OrdersRequest.fetch_order(p)
         return 200
       rescue ArgumentError, JSON::ParserError => e
         logger.fatal $!
@@ -45,7 +45,7 @@ module FielddayMws
       begin
         params = JSON.parse(request.body.read)#env["rack.input"].read)
         p = orders_requests_params(params)
-        #FielddayMws::ApiRequest.fetch_orders(p)
+        #FielddayMws::OrdersRequest.fetch_orders(p)
         FielddayMws::FetchOrdersWorker.perform_async(p)
         return 200
       rescue ArgumentError, JSON::ParserError => e
