@@ -3,15 +3,13 @@ module FielddayMws
 
     # get orders from Amazon storefront between two times
     def self.fetch_orders(params)
-      FielddayMws::Client.fetch("#{FielddayMws::App.base_uri}/v1/orders_requests", params)
+      FielddayMws::Client.fetch("#{FielddayMws::App.base_uri}/v1/orders_requests", params.to_json)
     end
 
     # get orders from Amazon storefront between two times
     def self.fetch_order(params)
-      FielddayMws::Client.fetch("#{FielddayMws::App.base_uri}/v1/order_requests", params)
+      FielddayMws::Client.fetch("#{FielddayMws::App.base_uri}/v1/order_requests", params.to_json)
     end  
-
-
 
     # TEST STUBBING
 
@@ -37,15 +35,8 @@ module FielddayMws
 
     protected
     
-    def self.fetch(uri, params)
-      begin
-        response = RestClient.post uri, params.to_json
-        #response = Typhoeus.post uri, body: params.to_json, headers: { :content_type => :json, :accept => :json }
-        #puts response.code
-      rescue RestClient::InternalServerError => e
-        return e.message
-      end
-      return response.body      
+    def self.fetch(uri, payload)
+      return App.post_json(uri, payload)
     end
 
     def self.xml_body(name)

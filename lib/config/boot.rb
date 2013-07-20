@@ -6,6 +6,10 @@ require 'json'
 require 'oj'
 require 'redis'
 require 'sidekiq'
+require 'faraday'
+require 'typhoeus'
+require 'typhoeus/adapters/faraday'
+require 'faraday_middleware'
 
 # Register RABL
 #require 'rabl'

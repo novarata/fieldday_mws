@@ -17,9 +17,22 @@ module FielddayMws
     class << self
       attr_accessor :base_uri, :item_sleep
 
-      def post_callback(uri, payload)
+      def post_json(uri, payload)
         #Typhoeus.post uri, body: payload, headers: { :content_type => :json, :accept => :json }
-        RestClient.post uri, payload, :content_type => :json, :accept => :json#, 'HTTP_AUTHORIZATION' => "Basic #{Base64.encode64("#{auth_token}:X")}"
+        #RestClient.post uri, payload, :content_type => :json, :accept => :json#, 'HTTP_AUTHORIZATION' => "Basic #{Base64.encode64("#{auth_token}:X")}"     
+        conn = Faraday.new(url: uri) do |faraday|
+          faraday.request :json
+          faraday.adapter :typhoeus
+          faraday.response :json, :content_type => /\bjson$/
+          #faraday.response :logger                  # log requests to STDOUT
+        end
+        response = conn.post { |req| req.body = payload }      
+        halt response.status if response.status >= 400
+        return response        
+      end
+      
+      def post_callback(uri, payload)
+        return post_json(uri, payload)
       end
     end
     
