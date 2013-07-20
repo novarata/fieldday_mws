@@ -18,8 +18,9 @@ module FielddayMws
       attr_accessor :base_uri, :item_sleep
 
       def post_callback(uri, payload)
+        #Typhoeus.post uri, body: payload, headers: { :content_type => :json, :accept => :json }
         RestClient.post uri, payload, :content_type => :json, :accept => :json#, 'HTTP_AUTHORIZATION' => "Basic #{Base64.encode64("#{auth_token}:X")}"
-      end    
+      end
     end
     
     get '/' do

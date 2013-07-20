@@ -40,6 +40,8 @@ module FielddayMws
     def self.fetch(uri, params)
       begin
         response = RestClient.post uri, params.to_json
+        #response = Typhoeus.post uri, body: params.to_json, headers: { :content_type => :json, :accept => :json }
+        #puts response.code
       rescue RestClient::InternalServerError => e
         return e.message
       end
