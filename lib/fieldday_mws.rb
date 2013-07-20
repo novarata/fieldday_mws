@@ -7,7 +7,7 @@ module FielddayMws
 
     configure { 
       set :server, :puma 
-      set :json_encoder, Oj
+      #set :json_encoder, Oj
     }
     configure :development do
       enable :logging, :dump_errors, :raise_errors

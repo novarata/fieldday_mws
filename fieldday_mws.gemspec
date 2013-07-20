@@ -12,9 +12,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency "sinatra"
   s.add_dependency "sinatra-contrib"
-  s.add_dependency "activerecord", '4.0.0'
-  s.add_dependency "pg"
-  s.add_dependency "oj"
+  s.add_dependency "activerecord", '4.0.0'  
   s.add_dependency "puma"
   s.add_dependency "haml"
   s.add_dependency "redis-store"

@@ -6,6 +6,14 @@ gemspec
 gem 'amazon-mws', github: 'aew/amazon-mws'
 #gem 'amazon-mws', path: '~/Code/amazon-mws'
 
+platforms :jruby do
+  gem 'activerecord-jdbcpostgresql-adapter', '1.3.0.beta2'
+end
+
+platforms :ruby do
+  gem 'pg'
+end
+
 group :development do
   gem "shotgun"
 end
