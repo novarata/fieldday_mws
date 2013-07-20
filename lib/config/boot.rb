@@ -20,13 +20,9 @@ require 'bundler'
 Bundler.setup
 Bundler.require(:default, ENV["RACK_ENV"].to_sym)
 
-require_relative '../models/orders_request'
-require_relative '../models/order'
-require_relative '../models/order_item'
-require_relative '../models/client'
-require_relative '../workers/fetch_order_worker.rb'
-require_relative '../workers/fetch_orders_worker.rb'
-require_relative '../workers/process_order_worker.rb'
+# Require models and workers
+Dir.glob(File.expand_path("../../models/*.rb", __FILE__)).each { |file| require file }
+Dir.glob(File.expand_path("../../workers/*.rb", __FILE__)).each { |file| require file }
 
 if ENV["RACK_ENV"] == 'test'
   require 'webmock'
