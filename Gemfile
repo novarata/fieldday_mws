@@ -3,7 +3,7 @@ source "https://rubygems.org"
 # Specify gem dependencies in ruby_omx.gemspec
 gemspec
 
-gem 'amazon-mws', github: 'aew/amazon-mws'
+gem 'amazon-mws', github: 'ejohansson/amazon-mws'
 #gem 'amazon-mws', path: '~/Code/amazon-mws'
 
 platforms :jruby do
