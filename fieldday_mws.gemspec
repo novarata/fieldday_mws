@@ -1,10 +1,10 @@
 Gem::Specification.new do |s|
   s.name        = "fieldday_mws"
   s.version     = "0.0.2"
-  s.date        = %q{2013-04-14}
+  s.date        = %q{2015-01-11}
   s.summary     = "Mountable engine for Amazon MWS services to FieldDay"
-  s.authors     = ['A. Edward Wible']
-  s.email       = ["aewible@gmail.com"]
+  s.authors     = ['A. Edward Wible', 'Eric Johansson']
+  s.email       = ["aewible@gmail.com", "ejohansson@novarata.com"]
 
   s.files = Dir["lib/**/*"] + Dir["spec/**/*"] + ["README.md"]
   s.test_files = Dir["spec/**/*"]
