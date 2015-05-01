@@ -37,7 +37,7 @@ end
 # ACTIVE RECORD
 local_db_name = ENV["RACK_ENV"]=='test' ? 'fieldday_test' : 'fieldday_dev'
 db = URI.parse(ENV['DATABASE_URL'] || "postgres://localhost/#{local_db_name}")
-ENV['DATABASE_URL'] = "#{ENV['DATABASE_URL']}?pool=20" if ENV['DATABASE_URL']
+ENV['DATABASE_URL'] = "#{database_url}?pool=20" if ENV['DATABASE_URL']
 ActiveRecord::Base.establish_connection(
   :adapter  => db.scheme == 'postgres' ? 'postgresql' : db.scheme,
   :host     => db.host,
