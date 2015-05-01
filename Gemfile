@@ -7,7 +7,7 @@ gem 'amazon-mws', github: 'aew/amazon-mws'
 #gem 'amazon-mws', path: '~/Code/amazon-mws'
 
 platforms :jruby do
-  gem 'activerecord-jdbcpostgresql-adapter', '1.3.0.beta2'
+  gem 'activerecord-jdbcpostgresql-adapter'
 end
 
 platforms :ruby do
